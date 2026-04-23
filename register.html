@@ -5,58 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account | Connect</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <style>
-        .fade-in { animation: fadeIn 1.2s ease-in-out; }
+        .fade-in { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Eye icon positioning */
+        .password-container { position: relative; }
+        .eye-icon {
+            position: absolute;
+            right: 12px;
+            top: 38px;
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.3s;
+        }
+        .eye-icon:hover { color: #2563eb; }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
 
     <div class="fade-in mb-6 text-center">
-        <img src="mainlogo.png" alt="Logo" class="w-24 h-24 mx-auto mb-2 object-contain">
+        <img src="mainlogo.png" alt="Logo" class="w-24 h-24 mx-auto mb-2 object-contain drop-shadow-md">
         <h1 class="text-2xl font-bold text-gray-800">Join Our Community</h1>
     </div>
 
-    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md fade-in">
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md fade-in border border-gray-100">
         <form id="registerForm" class="space-y-4">
             
             <div>
                 <label class="block text-sm font-medium text-gray-700">Full Name</label>
-                <input type="text" id="fullName" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                <input type="text" id="fullName" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Birthday</label>
-                    <input type="date" id="dob" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="date" id="dob" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">City</label>
-                    <input type="text" id="city" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="text" id="city" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                 </div>
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700">Email Address</label>
-                <input type="email" id="email" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                <input type="email" id="email" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all">
             </div>
 
-            <div>
+            <div class="password-container">
                 <label class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none border-gray-300">
+                <input type="password" id="password" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none border-gray-300 pr-10 transition-all">
+                <svg onclick="togglePassword('password')" class="eye-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
             </div>
 
-            <div>
+            <div class="password-container">
                 <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                <input type="password" id="confirmPassword" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none border-gray-300 transition-colors duration-300">
+                <input type="password" id="confirmPassword" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none border-gray-300 pr-10 transition-colors duration-300">
+                <svg onclick="togglePassword('confirmPassword')" class="eye-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                 <p id="msg" class="text-xs mt-1 hidden"></p>
             </div>
 
-            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">
-                Sign Up
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 hover:shadow-lg transition-all duration-300 flex justify-center items-center gap-2">
+                <span>Sign Up</span>
+                <svg id="spinner" class="w-5 h-5 animate-spin text-white hidden" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
             </button>
         </form>
 
@@ -66,6 +82,17 @@
     </div>
 
     <script>
+        // Show/Hide Password Logic
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+            } else {
+                input.type = "password";
+            }
+        }
+
+        // Password Matching Visual Logic
         const pass = document.getElementById('password');
         const confirmPass = document.getElementById('confirmPassword');
         const msg = document.getElementById('msg');
@@ -76,13 +103,13 @@
                 if (pass.value === confirmPass.value) {
                     confirmPass.classList.remove('border-red-500');
                     confirmPass.classList.add('border-green-500');
-                    msg.innerText = "Passwords match";
-                    msg.className = "text-xs mt-1 text-green-600";
+                    msg.innerText = "Passwords match \u2714"; // Tick mark
+                    msg.className = "text-xs mt-1 text-green-600 font-medium";
                 } else {
                     confirmPass.classList.remove('border-green-500');
                     confirmPass.classList.add('border-red-500');
-                    msg.innerText = "Passwords do not match";
-                    msg.className = "text-xs mt-1 text-red-600";
+                    msg.innerText = "Passwords do not match \u2716"; // Cross mark
+                    msg.className = "text-xs mt-1 text-red-600 font-medium";
                 }
             } else {
                 msg.classList.add('hidden');
@@ -92,12 +119,11 @@
     </script>
 
     <script type="module">
-        // Firebase ගෙන ඒම
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ඔබගේ Firebase Config එක
+        // Your Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
             authDomain: "mysocialapp-27824.firebaseapp.com",
@@ -107,16 +133,15 @@
             appId: "1:774980218922:web:24b832c42b16d42a025353"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Form Submit කිරීම
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
+            const spinner = document.getElementById('spinner');
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
@@ -124,41 +149,61 @@
             const dob = document.getElementById('dob').value;
             const city = document.getElementById('city').value;
 
-            // Password එක සමානදැයි නැවත පරීක්ෂා කිරීම
+            // Check passwords using SweetAlert
             if (password !== confirmPassword) {
-                alert("Passwords do not match!");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Passwords do not match!',
+                    confirmButtonColor: '#2563eb'
+                });
                 return;
             }
 
-            // බටන් එක ඔබන විට "Processing..." ලෙස පෙන්වීම
-            submitBtn.innerText = "Creating Account...";
+            // Show Loading State
             submitBtn.disabled = true;
+            spinner.classList.remove('hidden');
 
             try {
-                // 1. Auth එකේ එකවුන්ට් එක හැදීම
+                // Firebase Auth
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // 2. Database එකේ දත්ත සේව් කිරීම
+                // Firestore Data Saving
                 await setDoc(doc(db, "users", user.uid), {
                     uid: user.uid,
                     name: fullName,
                     email: email,
                     dob: dob,
                     city: city,
-                    status: "pending", // ඇඩ්මින් කන්ෆර්ම් කරන තුරු
+                    status: "pending", 
                     role: "user",
                     createdAt: serverTimestamp()
                 });
 
-                alert("Success! Your account is created but needs Admin approval. Please wait.");
-                document.getElementById('registerForm').reset();
-                window.location.href = "login.html"; // ලොගින් පේජ් එකට යවයි
+                // Success SweetAlert
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Registration Successful!',
+                    text: 'Your account has been created. Please wait for Admin approval to login.',
+                    confirmButtonColor: '#2563eb'
+                }).then(() => {
+                    document.getElementById('registerForm').reset();
+                    window.location.href = "login.html"; 
+                });
 
             } catch (error) {
-                alert("Error: " + error.message);
-                submitBtn.innerText = "Sign Up";
+                // Error SweetAlert
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Registration Failed',
+                    text: error.message,
+                    confirmButtonColor: '#2563eb'
+                });
+            } finally {
+                // Reset Button State
                 submitBtn.disabled = false;
+                spinner.classList.add('hidden');
             }
         });
     </script>
