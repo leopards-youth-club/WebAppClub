@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* ඇඩ්මින් චෙක් කරනකම් පේජ් එක හංගලා තියන්න */
+        .hidden-content { display: none; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-6">
+
+    <div id="loadingScreen" class="flex flex-col items-center justify-center h-screen">
+        <svg class="w-10 h-10 animate-spin text-blue-600 mb-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        <p class="text-gray-600 font-medium">Verifying Admin Access...</p>
+    </div>
+
+    <div id="mainContent" class="hidden-content max-w-5xl mx-auto">
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6 flex justify-between items-center border border-gray-100">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
+                <p class="text-sm text-gray-500 mt-1">Pending user approvals</p>
+            </div>
+            <button id="logoutBtn" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-100 transition-colors">
+                Logout
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-700 text-sm border-b">
+                            <th class="p-4 font-semibold">Name</th>
+                            <th class="p-4 font-semibold">Email</th>
+                            <th class="p-4 font-semibold">City</th>
+                            <th class="p-4 font-semibold text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody" class="text-sm">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ඔබේ Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
+            authDomain: "mysocialapp-27824.firebaseapp.com",
+            projectId: "mysocialapp-27824",
+            storageBucket: "mysocialapp-27824.firebasestorage.app",
+            messagingSenderId: "774980218922",
+            appId: "1:774980218922:web:24b832c42b16d42a025353"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ඔබේ Apps Script URL එක
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyugcB66KhFCqEp1tD2RYwvWgB0GysR6IXhFLGetcDvc_398hAbpbYYe4Clm1sy4o_7/exec";
+
+        // 1. Auth State & Security Check
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "login.html"; // ලොග් වෙලා නැත්නම් විසි කරනවා
+                return;
+            }
+
+            // Backend (Apps Script) එකෙන් ඇඩ්මින්ද අහනවා
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "checkAdmin", email: user.email }),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                });
+                const result = await response.json();
+
+                if (result.isAdmin) {
+                    // ඇඩ්මින් නම් Loading එක අයින් කරලා Dashboard එක පෙන්නනවා
+                    document.getElementById('loadingScreen').classList.add('hidden');
+                    document.getElementById('mainContent').classList.remove('hidden-content');
+                    loadPendingUsers();
+                } else {
+                    // ඇඩ්මින් නෙවෙයි නම් Error එකක් දීලා index.html (News Feed) එකට යවනවා
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Access Denied',
+                        text: 'You are not an authorized admin.'
+                    }).then(() => {
+                        window.location.href = "index.html"; 
+                    });
+                }
+            } catch (error) {
+                Swal.fire('Error', 'Connection failed with server.', 'error');
+            }
+        });
+
+        // 2. Pending Users ලෝඩ් කිරීම
+        async function loadPendingUsers() {
+            const tableBody = document.getElementById('usersTableBody');
+            tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">Fetching requests...</td></tr>`;
+            
+            try {
+                const q = query(collection(db, "users"), where("status", "==", "pending"));
+                const querySnapshot = await getDocs(q);
+                tableBody.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500 font-medium">No pending requests right now 🎉</td></tr>`;
+                    return;
+                }
+
+                querySnapshot.forEach((docSnap) => {
+                    const user = docSnap.data();
+                    const row = document.createElement('tr');
+                    row.className = "border-b hover:bg-gray-50";
+                    row.innerHTML = `
+                        <td class="p-4 font-medium text-gray-800">${user.name}</td>
+                        <td class="p-4 text-gray-600">${user.email}</td>
+                        <td class="p-4 text-gray-600">${user.city}</td>
+                        <td class="p-4 text-center space-x-2">
+                            <button onclick="window.approveUser('${user.uid}', '${user.name}')" class="bg-green-600 text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-green-700 transition">Approve</button>
+                            <button onclick="window.rejectUser('${user.uid}')" class="bg-red-600 text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-red-700 transition">Reject</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">Failed to load data.</td></tr>`;
+            }
+        }
+
+        // 3. Approve Action
+        window.approveUser = async function(uid, userName) {
+            Swal.fire({ 
+                title: 'Approving User...', 
+                text: 'Updating database and creating Google Sheet.',
+                allowOutsideClick: false, 
+                didOpen: () => { Swal.showLoading(); } 
+            });
+
+            try {
+                // Firebase Status අප්ඩේට් කිරීම
+                await updateDoc(doc(db, "users", uid), { status: "active" });
+                
+                // Sheet එක හැදීමට Apps Script එකට කෝල් කිරීම
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "createSheet", userName: userName }),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                });
+
+                Swal.fire('Success!', `${userName}'s account is now active.`, 'success');
+                loadPendingUsers(); // වගුව Refresh කිරීම
+
+            } catch (e) { 
+                Swal.fire('Error', e.message, 'error'); 
+            }
+        };
+
+        // 4. Reject Action
+        window.rejectUser = async function(uid) {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "This will delete the request permanently.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, reject!'
+            });
+
+            if (result.isConfirmed) {
+                await deleteDoc(doc(db, "users", uid));
+                Swal.fire('Deleted!', 'Request has been rejected.', 'success');
+                loadPendingUsers();
+            }
+        };
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => { window.location.href = "login.html"; });
+        });
+    </script>
+</body>
+</html>
