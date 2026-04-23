@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 1.2s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="fade-in mb-6 text-center">
+        <img src="mainlogo.png" alt="Logo" class="w-24 h-24 mx-auto mb-2 object-contain">
+        <h1 class="text-2xl font-bold text-gray-800">Join Our Community</h1>
+    </div>
+
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md fade-in">
+        <form id="registerForm" class="space-y-4">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" id="fullName" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Birthday</label>
+                    <input type="date" id="dob" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">City</label>
+                    <input type="text" id="city" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" id="email" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="password" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none border-gray-300">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                <input type="password" id="confirmPassword" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none border-gray-300 transition-colors duration-300">
+                <p id="msg" class="text-xs mt-1 hidden"></p>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">
+                Sign Up
+            </button>
+        </form>
+
+        <p class="mt-6 text-center text-gray-600 text-sm">
+            Already have an account? <a href="login.html" class="text-blue-600 font-bold hover:underline">Login here</a>
+        </p>
+    </div>
+
+    <script>
+        const pass = document.getElementById('password');
+        const confirmPass = document.getElementById('confirmPassword');
+        const msg = document.getElementById('msg');
+
+        confirmPass.addEventListener('input', () => {
+            if (confirmPass.value.length > 0) {
+                msg.classList.remove('hidden');
+                if (pass.value === confirmPass.value) {
+                    confirmPass.classList.remove('border-red-500');
+                    confirmPass.classList.add('border-green-500');
+                    msg.innerText = "Passwords match";
+                    msg.className = "text-xs mt-1 text-green-600";
+                } else {
+                    confirmPass.classList.remove('border-green-500');
+                    confirmPass.classList.add('border-red-500');
+                    msg.innerText = "Passwords do not match";
+                    msg.className = "text-xs mt-1 text-red-600";
+                }
+            } else {
+                msg.classList.add('hidden');
+                confirmPass.classList.remove('border-green-500', 'border-red-500');
+            }
+        });
+    </script>
+
+    <script type="module">
+        // Firebase ගෙන ඒම
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ඔබගේ Firebase Config එක
+        const firebaseConfig = {
+            apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
+            authDomain: "mysocialapp-27824.firebaseapp.com",
+            projectId: "mysocialapp-27824",
+            storageBucket: "mysocialapp-27824.firebasestorage.app",
+            messagingSenderId: "774980218922",
+            appId: "1:774980218922:web:24b832c42b16d42a025353"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Form Submit කිරීම
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const fullName = document.getElementById('fullName').value;
+            const dob = document.getElementById('dob').value;
+            const city = document.getElementById('city').value;
+
+            // Password එක සමානදැයි නැවත පරීක්ෂා කිරීම
+            if (password !== confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
+
+            // බටන් එක ඔබන විට "Processing..." ලෙස පෙන්වීම
+            submitBtn.innerText = "Creating Account...";
+            submitBtn.disabled = true;
+
+            try {
+                // 1. Auth එකේ එකවුන්ට් එක හැදීම
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // 2. Database එකේ දත්ත සේව් කිරීම
+                await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid,
+                    name: fullName,
+                    email: email,
+                    dob: dob,
+                    city: city,
+                    status: "pending", // ඇඩ්මින් කන්ෆර්ම් කරන තුරු
+                    role: "user",
+                    createdAt: serverTimestamp()
+                });
+
+                alert("Success! Your account is created but needs Admin approval. Please wait.");
+                document.getElementById('registerForm').reset();
+                window.location.href = "login.html"; // ලොගින් පේජ් එකට යවයි
+
+            } catch (error) {
+                alert("Error: " + error.message);
+                submitBtn.innerText = "Sign Up";
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
