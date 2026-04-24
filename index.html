@@ -159,6 +159,48 @@
             if (tags) { postMeta.tags = tags; updateMetaPreview(); }
         });
 
+        // --- අලුතින් එකතු කළ Image Compressor එක ---
+        async function compressImage(file) {
+            // පින්තූරයක් නෙවෙයි නම් (උදා: වීඩියෝ එකක් නම්) ඒක ඒ විදියටම යවනවා
+            if (!file.type.startsWith('image/')) return file;
+
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        // උපරිම පළල 1280px වලට සීමා කිරීම (Facebook වලත් මේක පාවිච්චි වෙනවා)
+                        const MAX_WIDTH = 1280;
+                        if (width > MAX_WIDTH) {
+                            height = Math.round((height * MAX_WIDTH) / width);
+                            width = MAX_WIDTH;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Quality එක 75% කට අඩු කරලා අලුත් ෆයිල් එකක් හදනවා
+                        canvas.toBlob((blob) => {
+                            if (!blob) return resolve(file);
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve(compressedFile);
+                        }, 'image/jpeg', 0.75); 
+                    };
+                };
+            });
+        }
+
         // Media Preview
         document.getElementById('mediaUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -183,7 +225,7 @@
             document.getElementById('videoPreview').pause();
         });
 
-        // Create Post (With Cloudinary - Error Debugging Version)
+        // Create Post (With Cloudinary)
         document.getElementById('createPostBtn').addEventListener('click', async () => {
             const content = document.getElementById('postContent').value.trim();
             if (!content && !postMeta.file) { Swal.fire('Empty Post', 'Please write something or attach media.', 'info'); return; }
@@ -197,12 +239,16 @@
                 let mediaUrl = null;
 
                 if (postMeta.file) {
-                    const CLOUD_NAME = "dxauvoq7v"; 
+                    // 🛑 මෙතැනට ඔයාගේ විස්තර දාන්න 🛑
+                    const CLOUD_NAME = "dt2y6gent"; 
                     const UPLOAD_PRESET = "ml_default"; 
                     const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 
+                    // ෆයිල් එක අප්ලෝඩ් කරන්න කලින් Compress කරනවා
+                    let fileToUpload = await compressImage(postMeta.file);
+
                     const fd = new FormData();
-                    fd.append("file", postMeta.file);
+                    fd.append("file", fileToUpload);
                     fd.append("upload_preset", UPLOAD_PRESET);
 
                     const progressContainer = document.getElementById('uploadProgressContainer');
@@ -214,7 +260,10 @@
                         xhr.open('POST', url, true);
                         
                         xhr.upload.onprogress = (e) => {
-                            if (e.lengthComputable) progressBar.style.width = ((e.loaded / e.total) * 100) + '%';
+                            if (e.lengthComputable) {
+                                let percent = (e.loaded / e.total) * 100;
+                                progressBar.style.width = percent + '%';
+                            }
                         };
                         
                         xhr.onload = () => {
@@ -222,15 +271,17 @@
                                 mediaUrl = JSON.parse(xhr.responseText).secure_url;
                                 resolve();
                             } else {
-                                // මෙන්න මේ ටික වෙනස් කළා ඇත්තම එරර් එක අල්ලගන්න 👇
-                                let exactError = "Unknown Error";
+                                // Error එක console එකේ පෙන්වීම
+                                console.log("Cloudinary Error Response:", xhr.responseText);
+                                let errorMsg = "Cloudinary Error.";
                                 try {
-                                    exactError = JSON.parse(xhr.responseText).error.message;
+                                    let errObj = JSON.parse(xhr.responseText);
+                                    if(errObj.error && errObj.error.message) errorMsg = errObj.error.message;
                                 } catch(e) {}
-                                reject(new Error(exactError)); // ඇත්තම හේතුව Popup එකට යවනවා
+                                reject(new Error(errorMsg));
                             }
                         };
-                        xhr.onerror = () => reject(new Error("Internet Connection Error or Adblocker blocking upload."));
+                        xhr.onerror = () => reject(new Error("Internet Connection Error"));
                         xhr.send(fd);
                     });
 
@@ -255,8 +306,11 @@
                 updateMetaPreview();
 
             } catch (error) {
-                // එරර් එක Popup එකේ පෙන්නනවා
-                Swal.fire('Upload Error', 'Reason: ' + error.message, 'error');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Upload Error',
+                    text: error.message
+                });
                 document.getElementById('uploadProgressContainer').classList.add('hidden');
             } finally {
                 btn.disabled = false; btnText.innerText = "Post"; spinner.classList.add('hidden');
