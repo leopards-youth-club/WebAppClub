@@ -11,8 +11,9 @@
         body { padding-top: 60px; background-color: #f3f4f6; font-family: 'Inter', sans-serif; }
         #bottomNav { transition: transform 0.3s ease-in-out; }
         .hide-nav { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+        .dropdown-content { display: none; }
+        .show-dropdown { display: block; }
         .cover-bg { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); }
-        /* Modal Animation */
         .modal-enter { animation: fadeInScale 0.3s ease-out forwards; }
         @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
@@ -39,25 +40,19 @@
         </nav>
     </header>
 
-    <main class="max-w-3xl mx-auto pb-10">
+    <main class="max-w-4xl mx-auto pb-10">
         <div class="bg-white shadow-sm">
             <div id="coverPhoto" class="w-full h-48 md:h-64 cover-bg bg-cover bg-center relative group">
-                <button id="editCoverBtn" class="hidden absolute top-4 right-4 bg-black/50 text-white p-2.5 rounded-full hover:bg-black/70 backdrop-blur-sm transition z-10" title="Edit Cover Photo">
-                    <i class="fa-solid fa-camera"></i>
-                </button>
+                <button id="editCoverBtn" class="hidden absolute top-4 right-4 bg-black/50 text-white p-2.5 rounded-full hover:bg-black/70 backdrop-blur-sm transition z-10"><i class="fa-solid fa-camera"></i></button>
             </div>
             
             <div class="px-4 pb-6 relative max-w-2xl mx-auto">
                 <div class="flex justify-between items-end -mt-16 mb-4">
                     <div class="relative group">
                         <img id="profilePic" src="https://ui-avatars.com/api/?name=User&background=random" class="w-32 h-32 rounded-full border-4 border-white shadow-md object-cover z-10 relative bg-white">
-                        <button id="editDpBtn" class="hidden absolute bottom-0 right-0 bg-gray-800 text-white p-2 rounded-full border-2 border-white hover:bg-blue-600 transition z-20">
-                            <i class="fa-solid fa-camera text-sm"></i>
-                        </button>
+                        <button id="editDpBtn" class="hidden absolute bottom-0 right-0 bg-gray-800 text-white p-2 rounded-full border-2 border-white hover:bg-blue-600 transition z-20"><i class="fa-solid fa-camera text-sm"></i></button>
                     </div>
-                    
-                    <div id="actionButtons" class="flex gap-2 mb-2">
-                        </div>
+                    <div id="actionButtons" class="flex gap-2 mb-2"></div>
                 </div>
 
                 <h1 id="userName" class="text-3xl font-bold text-gray-900">Loading...</h1>
@@ -68,16 +63,26 @@
                     <span id="userDob"><i class="fa-solid fa-cake-candles mr-1"></i> <span>Unknown</span></span>
                     <span id="userPhone" class="hidden text-blue-600"><i class="fa-solid fa-phone mr-1"></i> <span id="phoneText"></span></span>
                 </div>
+
+                <div class="flex gap-8 mt-5 border-t border-gray-100 pt-5">
+                    <div class="text-center">
+                        <span id="statPosts" class="block font-bold text-2xl text-gray-800">0</span>
+                        <span class="text-xs text-gray-500 uppercase tracking-widest font-bold">Posts</span>
+                    </div>
+                    <div class="text-center">
+                        <span id="statFriends" class="block font-bold text-2xl text-gray-800">0</span>
+                        <span class="text-xs text-gray-500 uppercase tracking-widest font-bold">Friends</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="flex border-t border-gray-200 max-w-2xl mx-auto px-4">
+            <div class="flex border-t border-gray-200 max-w-2xl mx-auto px-4 mt-2">
                 <button onclick="switchTab('posts')" id="tabPosts" class="flex-1 py-4 font-bold text-blue-600 border-b-4 border-blue-600 transition-colors">Timeline</button>
                 <button onclick="switchTab('anon')" id="tabAnon" class="flex-1 py-4 font-bold text-gray-500 hover:text-blue-600 transition-colors">Secret Messages 🕵️‍♂️</button>
             </div>
         </div>
 
         <div class="max-w-2xl mx-auto px-4 mt-6">
-            
             <div id="postsTab" class="space-y-6">
                 <div id="userPostsContainer" class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>
             </div>
@@ -94,7 +99,6 @@
                     <div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>
                 </div>
             </div>
-
         </div>
     </main>
 
@@ -106,7 +110,7 @@
             </div>
             <div class="p-6 space-y-4">
                 <div><label class="block text-sm font-bold text-gray-700 mb-1">Full Name</label><input type="text" id="editName" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-blue-500"></div>
-                <div><label class="block text-sm font-bold text-gray-700 mb-1">Bio / About me</label><textarea id="editBio" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-blue-500" placeholder="A short description about yourself..."></textarea></div>
+                <div><label class="block text-sm font-bold text-gray-700 mb-1">Bio / About me</label><textarea id="editBio" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-blue-500"></textarea></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-sm font-bold text-gray-700 mb-1">Birthday</label><input type="date" id="editDob" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-blue-500"></div>
                     <div><label class="block text-sm font-bold text-gray-700 mb-1">City</label><input type="text" id="editCity" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-blue-500"></div>
@@ -123,7 +127,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc, addDoc, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // 🛑 ඔයාගේ විස්තර දාන්න 🛑
         const firebaseConfig = {
@@ -134,9 +138,9 @@
             messagingSenderId: "774980218922",
             appId: "1:774980218922:web:24b832c42b16d42a025353"
         };
-        const CLOUD_NAME = "dt2y6gent"; 
+        const CLOUD_NAME = "dt2y6gentE"; 
         const UPLOAD_PRESET = "ml_default";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbytU7GJGMLGWElVVZdNwMVFKxxapgMsu0JwK90RkGoaVlswybYozkPFxwMRAeprtVjG/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwh8vT9j_37vEyZ3vlegdPteTBkTlldALz8tlg2xP1GNNEm-8IvzsEFSL3MADyWyNzj/exec";
 
         const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 
@@ -145,7 +149,6 @@
         const urlParams = new URLSearchParams(window.location.search);
         let targetUid = urlParams.get('uid');
 
-        // Nav Scroll
         let lastScrollY = window.scrollY;
         window.addEventListener("scroll", () => {
             const bottomNav = document.getElementById("bottomNav");
@@ -156,7 +159,7 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "login.html"; return; }
-            if (!targetUid) targetUid = user.uid; // Url එකේ ID එකක් නැත්නම් තමන්ගේ එක පෙන්වයි
+            if (!targetUid) targetUid = user.uid; 
 
             const cuDoc = await getDoc(doc(db, "users", user.uid));
             currentUser = cuDoc.data();
@@ -170,11 +173,12 @@
                 const vpDoc = await getDoc(doc(db, "users", targetUid));
                 if (!vpDoc.exists()) { Swal.fire('Error', 'User not found', 'error'); return; }
                 viewedUser = vpDoc.data();
+                if (!viewedUser.friends) viewedUser.friends = [];
                 
                 const isOwner = currentUser.uid === targetUid;
                 const isFriend = currentUser.friends.includes(targetUid);
 
-                // UI Update
+                // UI Data Update
                 document.getElementById('userName').innerText = viewedUser.name;
                 document.getElementById('userCity').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i> ${viewedUser.city || 'Unknown'}`;
                 document.getElementById('userDob').innerHTML = `<i class="fa-solid fa-cake-candles mr-1"></i> ${viewedUser.dob || 'Unknown'}`;
@@ -184,35 +188,33 @@
                 else document.getElementById('profilePic').src = `https://ui-avatars.com/api/?name=${viewedUser.name}&background=random`;
                 if (viewedUser.cover) document.getElementById('coverPhoto').style.backgroundImage = `url(${viewedUser.cover})`;
 
-                // Privacy: Show phone only to friends or owner
+                // Stats Update
+                document.getElementById('statFriends').innerText = viewedUser.friends.length;
+
+                // Privacy
                 if (viewedUser.phone && (isFriend || isOwner)) {
                     document.getElementById('userPhone').classList.remove('hidden');
                     document.getElementById('phoneText').innerText = viewedUser.phone;
                 }
 
-                // Action Buttons Setup
                 const actionContainer = document.getElementById('actionButtons');
                 if (isOwner) {
-                    // Own Profile -> Settings Button
                     actionContainer.innerHTML = `<button onclick="window.openSettings()" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-gear"></i> Settings</button>`;
                     document.getElementById('editCoverBtn').classList.remove('hidden');
                     document.getElementById('editDpBtn').classList.remove('hidden');
                 } else {
-                    // Friend's Profile -> Anonymous Message Button
                     document.getElementById('sendAnonBtnTop').classList.remove('hidden');
                     actionContainer.innerHTML = `<button onclick="window.switchTab('anon')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl shadow-md transition flex items-center gap-2"><i class="fa-solid fa-user-secret"></i> Send Secret</button>`;
                 }
 
-                loadPosts();
+                loadPosts(isOwner);
                 loadAnonMessages(isOwner);
 
             } catch (error) { console.error(error); }
         }
 
-        // Tabs
         window.switchTab = function(tabName) {
-            document.getElementById('postsTab').classList.add('hidden');
-            document.getElementById('anonTab').classList.add('hidden');
+            document.getElementById('postsTab').classList.add('hidden'); document.getElementById('anonTab').classList.add('hidden');
             document.getElementById('tabPosts').className = "flex-1 py-4 font-bold text-gray-500 hover:text-blue-600 transition-colors";
             document.getElementById('tabAnon').className = "flex-1 py-4 font-bold text-gray-500 hover:text-blue-600 transition-colors";
             
@@ -225,15 +227,11 @@
             }
         }
 
-        // Edit Profile Modal
         window.openSettings = function() {
-            document.getElementById('editName').value = viewedUser.name || '';
-            document.getElementById('editBio').value = viewedUser.bio || '';
-            document.getElementById('editDob').value = viewedUser.dob || '';
-            document.getElementById('editCity').value = viewedUser.city || '';
+            document.getElementById('editName').value = viewedUser.name || ''; document.getElementById('editBio').value = viewedUser.bio || '';
+            document.getElementById('editDob').value = viewedUser.dob || ''; document.getElementById('editCity').value = viewedUser.city || '';
             document.getElementById('editPhone').value = viewedUser.phone || '';
-            document.getElementById('settingsModal').classList.remove('hidden');
-            document.getElementById('settingsModal').classList.add('flex');
+            document.getElementById('settingsModal').classList.remove('hidden'); document.getElementById('settingsModal').classList.add('flex');
         }
         window.closeSettings = function() { document.getElementById('settingsModal').classList.add('hidden'); document.getElementById('settingsModal').classList.remove('flex'); }
         
@@ -242,28 +240,23 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`; btn.disabled = true;
             try {
                 await updateDoc(doc(db, "users", currentUser.uid), {
-                    name: document.getElementById('editName').value,
-                    bio: document.getElementById('editBio').value,
-                    dob: document.getElementById('editDob').value,
-                    city: document.getElementById('editCity').value,
+                    name: document.getElementById('editName').value, bio: document.getElementById('editBio').value,
+                    dob: document.getElementById('editDob').value, city: document.getElementById('editCity').value,
                     phone: document.getElementById('editPhone').value
                 });
                 Swal.fire('Saved!', 'Profile updated.', 'success').then(() => location.reload());
             } catch(e) { Swal.fire('Error', e.message, 'error'); btn.innerHTML = `Save Changes`; btn.disabled = false; }
         }
 
-        // Image Upload Logic (Cloudinary)
         async function uploadImage(file, fieldName) {
             const progress = document.getElementById('uploadProgressContainer');
             const bar = document.getElementById('uploadProgressBar');
             progress.classList.remove('hidden');
-
             const fd = new FormData(); fd.append("file", file); fd.append("upload_preset", UPLOAD_PRESET);
             const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 
             try {
-                const response = await fetch(url, { method: 'POST', body: fd });
-                const data = await response.json();
+                const response = await fetch(url, { method: 'POST', body: fd }); const data = await response.json();
                 await updateDoc(doc(db, "users", currentUser.uid), { [fieldName]: data.secure_url });
                 location.reload();
             } catch (e) { Swal.fire('Upload Failed', '', 'error'); }
@@ -275,38 +268,11 @@
         document.getElementById('coverUpload').addEventListener('change', (e) => { if(e.target.files[0]) uploadImage(e.target.files[0], 'cover'); });
         document.getElementById('dpUpload').addEventListener('change', (e) => { if(e.target.files[0]) uploadImage(e.target.files[0], 'dp'); });
 
-
-        // Anonymous Messages System
         document.getElementById('sendAnonBtnTop').addEventListener('click', async () => {
-            const { value: text } = await Swal.fire({
-                title: 'Secret Message 🕵️‍♂️',
-                input: 'textarea',
-                inputPlaceholder: 'Type something nice, funny, or honest...',
-                showCancelButton: true,
-                confirmButtonColor: '#4f46e5',
-                confirmButtonText: 'Send Anonymously'
-            });
-
+            const { value: text } = await Swal.fire({ title: 'Secret Message 🕵️‍♂️', input: 'textarea', inputPlaceholder: 'Type something nice...', showCancelButton: true, confirmButtonColor: '#4f46e5' });
             if (text) {
-                // 1. Firebase එකට සේව් කිරීම (UI එකට)
-                await addDoc(collection(db, "anon_messages"), {
-                    receiverId: targetUid,
-                    senderId: currentUser.uid, // We save it, but hide it in UI!
-                    message: text,
-                    createdAt: serverTimestamp()
-                });
-
-                // 2. Notification යැවීම
-                await addDoc(collection(db, "notifications"), {
-                    receiverId: targetUid,
-                    title: "New Secret Message 🕵️‍♂️",
-                    desc: "Someone sent you an anonymous message!",
-                    link: "profile.html",
-                    isRead: false,
-                    createdAt: serverTimestamp()
-                });
-
-                // 3. Google Sheet එකට Secret එක යැවීම
+                await addDoc(collection(db, "anon_messages"), { receiverId: targetUid, senderId: currentUser.uid, message: text, createdAt: serverTimestamp() });
+                
                 fetch(SCRIPT_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: "logAnonMessage", senderName: currentUser.name, receiverName: viewedUser.name, message: text }),
@@ -318,49 +284,71 @@
             }
         });
 
+        // 🌟 Fix: Indexing error fixed by removing orderBy and sorting in JS 🌟
         async function loadAnonMessages(isOwner) {
             const container = document.getElementById('anonMessagesContainer');
-            let q;
-            
-            if (isOwner) {
-                // View all messages received
-                q = query(collection(db, "anon_messages"), where("receiverId", "==", targetUid), orderBy("createdAt", "desc"));
-            } else {
-                // View only messages YOU sent to this person
-                q = query(collection(db, "anon_messages"), where("receiverId", "==", targetUid), where("senderId", "==", currentUser.uid), orderBy("createdAt", "desc"));
-            }
+            try {
+                let q = isOwner 
+                    ? query(collection(db, "anon_messages"), where("receiverId", "==", targetUid)) 
+                    : query(collection(db, "anon_messages"), where("receiverId", "==", targetUid), where("senderId", "==", currentUser.uid));
 
-            const snapshot = await getDocs(q);
-            container.innerHTML = '';
+                const snapshot = await getDocs(q);
+                let messages = [];
+                snapshot.forEach(doc => messages.push(doc.data()));
 
-            if (snapshot.empty) {
-                container.innerHTML = `<div class="text-center text-gray-400 py-10 italic">No secret messages yet.</div>`;
-                return;
-            }
+                messages.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
-            snapshot.forEach(docSnap => {
-                const msg = docSnap.data();
-                const d = msg.createdAt ? msg.createdAt.toDate().toLocaleDateString() : '';
+                container.innerHTML = '';
+                if (messages.length === 0) { container.innerHTML = `<div class="text-center text-gray-400 py-10 italic">No secret messages yet.</div>`; return; }
+
+                messages.forEach(msg => {
+                    const d = msg.createdAt ? msg.createdAt.toDate().toLocaleDateString() : '';
+                    const box = document.createElement('div');
+                    if (isOwner) {
+                        box.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4";
+                        box.innerHTML = `<div class="text-3xl">🕵️‍♂️</div><div><h4 class="font-bold text-gray-800 text-sm">Anonymous</h4><p class="text-gray-600 mt-1">${msg.message}</p><p class="text-xs text-gray-400 mt-2">${d}</p></div>`;
+                    } else {
+                        box.className = "bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex gap-4";
+                        box.innerHTML = `<div class="text-3xl">🤫</div><div><h4 class="font-bold text-indigo-800 text-sm">You sent:</h4><p class="text-indigo-900 mt-1">${msg.message}</p><p class="text-xs text-indigo-400 mt-2">${d}</p></div>`;
+                    }
+                    container.appendChild(box);
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        // 🌟 Fix: Load Posts for profile 🌟
+        async function loadPosts(isOwner) {
+            const container = document.getElementById('userPostsContainer');
+            try {
+                const q = query(collection(db, "posts"), where("authorId", "==", targetUid));
+                const snapshot = await getDocs(q);
                 
-                const box = document.createElement('div');
-                // Different styling based on view
-                if (isOwner) {
-                    box.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4";
-                    box.innerHTML = `<div class="text-3xl">🕵️‍♂️</div><div><h4 class="font-bold text-gray-800 text-sm">Anonymous</h4><p class="text-gray-600 mt-1">${msg.message}</p><p class="text-xs text-gray-400 mt-2">${d}</p></div>`;
-                } else {
-                    box.className = "bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex gap-4";
-                    box.innerHTML = `<div class="text-3xl">🤫</div><div><h4 class="font-bold text-indigo-800 text-sm">You sent:</h4><p class="text-indigo-900 mt-1">${msg.message}</p><p class="text-xs text-indigo-400 mt-2">${d}</p></div>`;
-                }
-                container.appendChild(box);
-            });
-        }
+                let posts = [];
+                snapshot.forEach(doc => { let p = doc.data(); p.id = doc.id; if(!p.isArchived) posts.push(p); });
 
-        // Post loader placeholder (Requires similar logic to index.html but filtered by authorId === targetUid)
-        async function loadPosts() {
-            document.getElementById('userPostsContainer').innerHTML = `<div class="text-center text-gray-400 py-10">Posts loading coming soon...</div>`;
-            // You can copy the loadFeed() logic from index.html here, just add `where("authorId", "==", targetUid)` to the query!
-        }
+                document.getElementById('statPosts').innerText = posts.length; // Update Post Count UI
 
+                posts.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                container.innerHTML = '';
+                if (posts.length === 0) { container.innerHTML = `<div class="text-center text-gray-500 py-10">No posts to show.</div>`; return; }
+
+                posts.forEach(post => {
+                    const timeString = post.createdAt ? post.createdAt.toDate().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+                    let mediaHtml = '';
+                    if (post.mediaUrl) {
+                        if (post.mediaType === 'video') mediaHtml = `<video src="${post.mediaUrl}" controls class="w-full h-auto max-h-96 object-cover mt-3 bg-black"></video>`;
+                        else mediaHtml = `<img src="${post.mediaUrl}" class="w-full h-auto max-h-96 object-cover mt-3 bg-gray-100">`;
+                    }
+                    const postEl = document.createElement('div');
+                    postEl.className = "bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden";
+                    postEl.innerHTML = `<div class="p-4"><div class="flex items-center gap-3 mb-2"><div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center font-bold text-blue-800 shadow-inner">${post.authorName.charAt(0)}</div><div><h3 class="font-bold text-gray-800 text-sm">${post.authorName}</h3><p class="text-xs text-gray-500 mt-0.5">${timeString}</p></div></div>${post.content ? `<div class="text-gray-800 text-sm whitespace-pre-wrap mt-2">${escapeHtml(post.content)}</div>` : ''}</div>${mediaHtml}`;
+                    container.appendChild(postEl);
+                });
+            } catch(e) { console.error(e); }
+        }
+        
+        function escapeHtml(text) { const div = document.createElement('div'); div.innerText = text; return div.innerHTML; }
         document.getElementById('logoutBtn').addEventListener('click', () => { signOut(auth).then(() => { window.location.href = "login.html"; }); });
     </script>
 </body>
