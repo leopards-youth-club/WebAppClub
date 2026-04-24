@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* Anti-Copy & Select */
-        body { padding-top: 60px; background-color: #f3f4f6; -webkit-user-select: none; user-select: none; }
-        img { pointer-events: auto; } /* Allow clicking images for lightbox */
+        /* Top Spacing Fixed */
+        body { padding-top: 130px; background-color: #f3f4f6; -webkit-user-select: none; user-select: none; font-family: 'Inter', sans-serif; }
+        @media (max-width: 768px) { body { padding-top: 145px; } }
+        img { pointer-events: auto; } 
         
         #bottomNav { transition: transform 0.3s ease-in-out; }
         .hide-nav { transform: translateY(-100%); opacity: 0; pointer-events: none; }
@@ -20,21 +21,19 @@
         .post-enter { animation: slideUpFade 0.5s ease-out forwards; opacity: 0; transform: translateY(20px); }
         @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
         
-        /* Reactions Hover effect */
+        /* Reaction Hover */
         .reaction-box { display: none; }
-        .reaction-btn-group:hover .reaction-box { display: flex; animation: slideUp 0.2s ease-out forwards;}
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .reaction-btn-group:hover .reaction-box { display: flex; animation: popUp 0.2s ease-out forwards;}
+        @keyframes popUp { from { opacity: 0; transform: translateY(10px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
         
-        .progress-bar-stripes { background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent); background-size: 1rem 1rem; animation: progress-stripes 1s linear infinite; }
-        @keyframes progress-stripes { from { background-position: 1rem 0; } to { background-position: 0 0; } }
-
-        /* Comment box transition */
-        .comments-section { display: none; }
-        .show-comments { display: block; animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Modal Animation */
+        .modal-slide-up { animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUpModal { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
-<body oncontextmenu="return false;"> <div id="lightbox" class="fixed inset-0 z-[100] bg-black/95 hidden flex flex-col items-center justify-center backdrop-blur-sm transition-opacity">
+<body oncontextmenu="return false;">
+
+    <div id="lightbox" class="fixed inset-0 z-[100] bg-black/95 hidden flex flex-col items-center justify-center backdrop-blur-sm transition-opacity">
         <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white text-3xl hover:text-red-500 z-[101]"><i class="fa-solid fa-times"></i></button>
         <img id="lightboxImg" class="max-w-full max-h-full object-contain p-2">
     </div>
@@ -45,10 +44,28 @@
                 <h2 class="text-lg font-bold text-gray-800">Tag Friends</h2>
                 <button onclick="closeTagModal()" class="text-gray-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div id="friendsListContainer" class="p-4 max-h-60 overflow-y-auto space-y-2">
-                </div>
+            <div id="friendsListContainer" class="p-4 max-h-60 overflow-y-auto space-y-2"></div>
             <div class="p-4 border-t border-gray-100">
                 <button onclick="saveTags()" class="w-full bg-blue-600 text-white font-bold py-2 rounded-xl hover:bg-blue-700">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="commentModal" class="fixed inset-0 bg-black/60 z-[90] hidden flex-col items-center justify-end md:justify-center p-0 md:p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-2xl h-[85vh] md:h-[75vh] rounded-t-3xl md:rounded-2xl flex flex-col shadow-2xl modal-slide-up">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-3xl md:rounded-t-2xl">
+                <h2 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-comments text-blue-600 mr-2"></i> Comments</h2>
+                <button onclick="closeCommentModal()" class="text-3xl text-gray-400 hover:text-red-500 leading-none">&times;</button>
+            </div>
+            <div id="modalCommentList" class="flex-1 overflow-y-auto p-4 space-y-5 bg-gray-50">
+                <div class="text-center text-gray-400 py-10"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>
+            </div>
+            <div class="p-4 border-t border-gray-200 bg-white flex gap-3 items-center">
+                <img id="modalMyDp" src="https://ui-avatars.com/api/?name=User" class="w-9 h-9 rounded-full object-cover shadow-sm border border-gray-100">
+                <div class="flex-1 bg-gray-100 rounded-full px-4 py-2 flex items-center border border-gray-200 focus-within:border-blue-400 focus-within:bg-white transition-colors">
+                    <input type="text" id="modalCommentInput" placeholder="Write a comment..." class="bg-transparent w-full outline-none text-sm text-gray-800">
+                    <button id="modalSendBtn" class="text-blue-600 font-bold px-2 hover:scale-110 transition-transform"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
             </div>
         </div>
     </div>
@@ -65,7 +82,7 @@
                 <div class="relative">
                     <img id="navProfilePic" src="https://ui-avatars.com/api/?name=User" class="w-10 h-10 rounded-full shadow-sm cursor-pointer object-cover border border-gray-200" onclick="document.getElementById('profileMenu').classList.toggle('show-dropdown')">
                     <div id="profileMenu" class="dropdown-content absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 origin-top-right transition-all">
-                        <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-blue-600"><i class="fa-solid fa-circle-user mr-2"></i> My Profile</a>
+                        <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-50"><i class="fa-solid fa-circle-user mr-2"></i> My Profile</a>
                         <hr class="my-1 border-gray-100">
                         <button id="logoutBtn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"><i class="fa-solid fa-right-from-bracket mr-2"></i> Logout</button>
                     </div>
@@ -77,17 +94,18 @@
             <a href="requests.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl"><i class="fa-solid fa-user-plus"></i></a>
             <a href="members.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl"><i class="fa-solid fa-users"></i></a>
             <a href="notifications.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl"><i class="fa-solid fa-bell"></i></a>
-            <a href="admindashboard.html" id="adminTab" class="hidden flex-1 flex justify-center py-3 text-red-400 hover:text-red-600 transition-colors text-2xl"><i class="fa-solid fa-shield-halved"></i></a>
         </nav>
     </header>
 
-    <main class="max-w-2xl mx-auto px-4 pb-10 mt-6">
+    <main class="max-w-2xl mx-auto px-4 pb-10">
         
         <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-100 transform transition-all hover:shadow-md">
             <div id="postInputSection">
                 <div class="flex gap-3">
-                    <img id="postBoxDp" src="https://ui-avatars.com/api/?name=User" class="w-10 h-10 rounded-full object-cover shadow-sm border border-gray-100 flex-shrink-0">
-                    <textarea id="postContent" class="w-full bg-gray-50 hover:bg-gray-100 focus:bg-white rounded-xl p-3 outline-none resize-none transition-colors border border-transparent focus:border-blue-300" rows="3" placeholder="What's on your mind?"></textarea>
+                    <a id="postBoxProfileLink" href="profile.html">
+                        <img id="postBoxDp" src="https://ui-avatars.com/api/?name=User" class="w-10 h-10 rounded-full object-cover shadow-sm border border-gray-100 hover:opacity-80 transition cursor-pointer">
+                    </a>
+                    <textarea id="postContent" class="w-full bg-gray-50 hover:bg-gray-100 focus:bg-white rounded-xl p-3 outline-none resize-none transition-colors border border-transparent focus:border-blue-300 text-gray-800" rows="3" placeholder="What's on your mind?"></textarea>
                 </div>
 
                 <div id="mediaPreviewContainer" class="hidden mt-3 relative rounded-xl overflow-hidden bg-black">
@@ -131,14 +149,14 @@
         </div>
         
         <div class="text-center mt-6 mb-10">
-            <button onclick="window.loadFeed()" class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition"><i class="fa-solid fa-rotate-right mr-2"></i>Load New Posts</button>
+            <button onclick="window.loadFeed()" class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition"><i class="fa-solid fa-rotate-right mr-2"></i> Load New Posts</button>
         </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
@@ -157,19 +175,12 @@
         let postMeta = { feeling: null, location: null, tags: [], file: null, fileType: null };
         let selectedPrivacy = "public";
 
-        // Toast Notification Config (Small bottom-center popups) 🌟
-        const Toast = Swal.mixin({
-            toast: true, position: 'bottom', showConfirmButton: false, timer: 2000,
-            customClass: { popup: 'bg-gray-900 text-white rounded-full px-4 py-2 text-sm' }
-        });
-
-        // Screenshot Prevention (Keyboard shortcuts) 🌟
+        // Security Shortcuts
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'PrintScreen' || (e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'c'))) {
-                e.preventDefault(); Toast.fire({ icon: 'warning', title: 'Action blocked for security' });
-            }
+            if (e.key === 'PrintScreen' || (e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'c'))) e.preventDefault();
         });
 
+        // Scroll hiding
         let lastScrollY = window.scrollY;
         window.addEventListener("scroll", () => {
             const bottomNav = document.getElementById("bottomNav");
@@ -185,72 +196,56 @@
                 currentUserProfile = userDoc.data();
                 if (!currentUserProfile.friends) currentUserProfile.friends = [];
                 
-                // Set Profile Pics in UI 🌟
-                let dp = currentUserProfile.dp || `https://ui-avatars.com/api/?name=${currentUserProfile.name}`;
+                let dp = currentUserProfile.dp || `https://ui-avatars.com/api/?name=${currentUserProfile.name}&background=random`;
                 document.getElementById('navProfilePic').src = dp;
                 document.getElementById('postBoxDp').src = dp;
+                document.getElementById('modalMyDp').src = dp;
 
-                if (user.email === "sandusha@gmail.com") { isAdmin = true; document.getElementById('adminTab').classList.remove('hidden'); document.getElementById('adminTab').classList.add('flex'); }
+                if (user.email === "sandusha@gmail.com") isAdmin = true;
                 window.loadFeed(); 
             }
         });
 
-        // Privacy Setup 🌟
-        document.getElementById('privacyBtn').addEventListener('click', () => {
-            document.getElementById('privacyMenu').classList.toggle('hidden');
-        });
+        // Toggle Privacy
+        document.getElementById('privacyBtn').addEventListener('click', () => document.getElementById('privacyMenu').classList.toggle('hidden'));
         window.setPrivacy = function(val, iconClass) {
-            selectedPrivacy = val;
-            document.getElementById('currentPrivacyIcon').className = `fa-solid ${iconClass}`;
+            selectedPrivacy = val; document.getElementById('currentPrivacyIcon').className = `fa-solid ${iconClass}`;
             document.getElementById('privacyMenu').classList.add('hidden');
         };
 
-        // Tag Friends Logic 🌟
+        // --- Tagging ---
         window.openTagModal = async function() {
             const container = document.getElementById('friendsListContainer');
-            container.innerHTML = '<div class="text-center text-sm text-gray-500 py-4"><i class="fa-solid fa-spinner fa-spin"></i> Loading friends...</div>';
-            document.getElementById('tagModal').classList.remove('hidden');
-            document.getElementById('tagModal').classList.add('flex');
-
-            if(currentUserProfile.friends.length === 0) {
-                container.innerHTML = '<div class="text-center text-sm text-gray-500 py-4">No friends added yet.</div>'; return;
-            }
-
+            document.getElementById('tagModal').classList.remove('hidden'); document.getElementById('tagModal').classList.add('flex');
+            if(currentUserProfile.friends.length === 0) { container.innerHTML = '<div class="text-center text-sm text-gray-500 py-4">No friends added yet.</div>'; return; }
             container.innerHTML = '';
             for (let fid of currentUserProfile.friends) {
                 const fDoc = await getDoc(doc(db, "users", fid));
                 if(fDoc.exists()) {
-                    let f = fDoc.data();
-                    let isChecked = postMeta.tags.includes(f.name) ? 'checked' : '';
-                    container.innerHTML += `
-                        <label class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200">
-                            <input type="checkbox" value="${f.name}" class="tag-checkbox w-4 h-4 text-blue-600 rounded focus:ring-blue-500" ${isChecked}>
-                            <div class="flex-1 text-gray-800 font-medium text-sm">${f.name}</div>
-                        </label>
-                    `;
+                    let f = fDoc.data(); let isChecked = postMeta.tags.some(t => t.uid === fid) ? 'checked' : '';
+                    container.innerHTML += `<label class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"><input type="checkbox" value="${fid}" data-name="${f.name}" class="tag-checkbox w-4 h-4 text-blue-600 rounded"> <div class="flex-1 text-gray-800 font-medium text-sm">${f.name}</div></label>`;
                 }
             }
         }
         window.closeTagModal = () => { document.getElementById('tagModal').classList.add('hidden'); document.getElementById('tagModal').classList.remove('flex'); }
         window.saveTags = () => {
             const checkboxes = document.querySelectorAll('.tag-checkbox:checked');
-            postMeta.tags = Array.from(checkboxes).map(cb => cb.value);
+            postMeta.tags = Array.from(checkboxes).map(cb => ({ uid: cb.value, name: cb.getAttribute('data-name') }));
             updateMetaPreview(); closeTagModal();
         }
 
-        // Image Compressor
+        // Compressor
         async function compressImage(file) {
             if (!file.type.startsWith('image/')) return file;
             return new Promise((resolve) => {
                 const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = (event) => {
-                    const img = new Image(); img.src = event.target.result;
+                reader.onload = (e) => {
+                    const img = new Image(); img.src = e.target.result;
                     img.onload = () => {
-                        const canvas = document.createElement('canvas'); let width = img.width; let height = img.height;
-                        const MAX_WIDTH = 1280; if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
-                        canvas.width = width; canvas.height = height;
-                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob((blob) => resolve(blob ? new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }) : file), 'image/jpeg', 0.75); 
+                        const canvas = document.createElement('canvas'); let w = img.width; let h = img.height;
+                        if (w > 1280) { h = Math.round((h * 1280) / w); w = 1280; }
+                        canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        canvas.toBlob((b) => resolve(b ? new File([b], file.name, { type: 'image/jpeg' }) : file), 'image/jpeg', 0.75); 
                     };
                 };
             });
@@ -263,38 +258,23 @@
             if (postMeta.tags.length > 0) preview.innerHTML += `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-md"><i class="fa-solid fa-user-tag mr-1"></i> With ${postMeta.tags.length} friends</span>`;
         }
 
-        document.getElementById('feelingBtn').addEventListener('click', async () => {
-            const { value: feeling } = await Swal.fire({ title: 'How are you feeling?', input: 'text', confirmButtonColor: '#2563eb' });
-            if (feeling) { postMeta.feeling = feeling; updateMetaPreview(); }
-        });
-        document.getElementById('locationBtn').addEventListener('click', async () => {
-            const { value: loc } = await Swal.fire({ title: 'Where are you?', input: 'text', confirmButtonColor: '#2563eb' });
-            if (loc) { postMeta.location = loc; updateMetaPreview(); }
-        });
-
+        document.getElementById('feelingBtn').addEventListener('click', async () => { const { value: feeling } = await Swal.fire({ title: 'How are you feeling?', input: 'text', confirmButtonColor: '#2563eb' }); if (feeling) { postMeta.feeling = feeling; updateMetaPreview(); }});
+        document.getElementById('locationBtn').addEventListener('click', async () => { const { value: loc } = await Swal.fire({ title: 'Where are you?', input: 'text', confirmButtonColor: '#2563eb' }); if (loc) { postMeta.location = loc; updateMetaPreview(); }});
+        
         document.getElementById('mediaUpload').addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return;
             postMeta.file = file; postMeta.fileType = file.type.startsWith('video/') ? 'video' : 'image';
+            document.getElementById('mediaPreviewContainer').classList.remove('hidden');
             const url = URL.createObjectURL(file);
-            const container = document.getElementById('mediaPreviewContainer');
-            const img = document.getElementById('imagePreview'); const vid = document.getElementById('videoPreview');
-            container.classList.remove('hidden');
-            if (postMeta.fileType === 'video') { img.classList.add('hidden'); vid.classList.remove('hidden'); vid.src = url; } 
-            else { vid.classList.add('hidden'); img.classList.remove('hidden'); img.src = url; }
+            if (postMeta.fileType === 'video') { document.getElementById('imagePreview').classList.add('hidden'); document.getElementById('videoPreview').classList.remove('hidden'); document.getElementById('videoPreview').src = url; } 
+            else { document.getElementById('videoPreview').classList.add('hidden'); document.getElementById('imagePreview').classList.remove('hidden'); document.getElementById('imagePreview').src = url; }
         });
+        document.getElementById('removeMediaBtn').addEventListener('click', () => { postMeta.file = null; postMeta.fileType = null; document.getElementById('mediaUpload').value = ''; document.getElementById('mediaPreviewContainer').classList.add('hidden'); document.getElementById('videoPreview').pause(); });
 
-        document.getElementById('removeMediaBtn').addEventListener('click', () => {
-            postMeta.file = null; postMeta.fileType = null; document.getElementById('mediaUpload').value = '';
-            document.getElementById('mediaPreviewContainer').classList.add('hidden'); document.getElementById('videoPreview').pause();
-        });
-
-        // Create Post
         document.getElementById('createPostBtn').addEventListener('click', async () => {
             const content = document.getElementById('postContent').value.trim();
-            if (!content && !postMeta.file) { Toast.fire({ icon: 'info', title: 'Please write something' }); return; }
-
-            document.getElementById('postInputSection').classList.add('hidden');
-            document.getElementById('uploadingState').classList.remove('hidden');
+            if (!content && !postMeta.file) return;
+            document.getElementById('postInputSection').classList.add('hidden'); document.getElementById('uploadingState').classList.remove('hidden');
 
             try {
                 let mediaUrl = null;
@@ -302,214 +282,222 @@
                     const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
                     let fileToUpload = await compressImage(postMeta.file);
                     const fd = new FormData(); fd.append("file", fileToUpload); fd.append("upload_preset", UPLOAD_PRESET);
-
-                    const progressContainer = document.getElementById('uploadProgressContainer'); const progressBar = document.getElementById('uploadProgressBar');
-                    progressContainer.classList.remove('hidden');
+                    document.getElementById('uploadProgressContainer').classList.remove('hidden');
 
                     await new Promise((resolve, reject) => {
                         const xhr = new XMLHttpRequest(); xhr.open('POST', url, true);
-                        xhr.upload.onprogress = (e) => { if (e.lengthComputable) progressBar.style.width = ((e.loaded / e.total) * 100) + '%'; };
-                        xhr.onload = () => { if (xhr.status === 200) { mediaUrl = JSON.parse(xhr.responseText).secure_url; resolve(); } else reject(new Error("Cloudinary Error")); };
-                        xhr.onerror = () => reject(new Error("Network Error")); xhr.send(fd);
+                        xhr.upload.onprogress = (e) => { if (e.lengthComputable) document.getElementById('uploadProgressBar').style.width = ((e.loaded / e.total) * 100) + '%'; };
+                        xhr.onload = () => { if (xhr.status === 200) { mediaUrl = JSON.parse(xhr.responseText).secure_url; resolve(); } else reject(); };
+                        xhr.send(fd);
                     });
-                    setTimeout(() => { progressContainer.classList.add('hidden'); progressBar.style.width = '0%'; }, 1000);
+                    setTimeout(() => { document.getElementById('uploadProgressContainer').classList.add('hidden'); document.getElementById('uploadProgressBar').style.width = '0%'; }, 1000);
                 }
 
                 await addDoc(collection(db, "posts"), {
-                    authorId: currentUserProfile.uid,
-                    authorName: currentUserProfile.name,
-                    authorDp: currentUserProfile.dp || null,
+                    authorId: currentUserProfile.uid, authorName: currentUserProfile.name, authorDp: currentUserProfile.dp || null,
                     content: content, mediaUrl: mediaUrl, mediaType: postMeta.fileType,
-                    feeling: postMeta.feeling, location: postMeta.location, tags: postMeta.tags.join(', '),
-                    privacy: selectedPrivacy,
-                    createdAt: serverTimestamp(), isArchived: false, isPinned: false,
-                    reactions: {} // { uid: 'like' }
+                    feeling: postMeta.feeling, location: postMeta.location, tags: postMeta.tags, privacy: selectedPrivacy,
+                    createdAt: serverTimestamp(), isArchived: false, isPinned: false, reactions: {}
                 });
 
                 document.getElementById('postContent').value = ""; document.getElementById('removeMediaBtn').click();
                 postMeta = { feeling: null, location: null, tags: [], file: null, fileType: null }; updateMetaPreview();
                 window.loadFeed();
-            } catch (error) { Toast.fire({ icon: 'error', title: 'Upload Failed' }); document.getElementById('uploadProgressContainer').classList.add('hidden'); } 
+            } catch (error) { Swal.fire('Error', 'Failed to upload', 'error'); } 
             finally { document.getElementById('postInputSection').classList.remove('hidden'); document.getElementById('uploadingState').classList.add('hidden'); }
         });
 
-        // Lightbox Logic 🌟
-        window.openLightbox = function(url) {
-            document.getElementById('lightboxImg').src = url;
-            document.getElementById('lightbox').classList.remove('hidden');
-        }
+        window.openLightbox = function(url) { document.getElementById('lightboxImg').src = url; document.getElementById('lightbox').classList.remove('hidden'); }
         window.closeLightbox = function() { document.getElementById('lightbox').classList.add('hidden'); document.getElementById('lightboxImg').src = ''; }
 
-        // Load Feed
+        // --- Load Feed ---
         window.loadFeed = async function() {
-            const feedContainer = document.getElementById('feedContainer');
-            feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>`;
-
+            const container = document.getElementById('feedContainer');
+            container.innerHTML = `<div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>`;
             try {
                 const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
                 const snapshot = await getDocs(q);
-                
-                feedContainer.innerHTML = '';
                 let posts = [];
                 snapshot.forEach((doc) => {
                     let p = doc.data(); p.id = doc.id;
                     if (p.isArchived) return;
                     if (p.privacy === 'onlyMe' && p.authorId !== currentUserProfile.uid) return;
-                    // Strict Friend Check
                     if (p.privacy === 'friends' && p.authorId !== currentUserProfile.uid && !currentUserProfile.friends.includes(p.authorId)) return;
                     posts.push(p);
                 });
-
                 posts.sort((a, b) => b.isPinned - a.isPinned);
-                if (posts.length === 0) { feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10">No posts yet.</div>`; return; }
+                if (posts.length === 0) { container.innerHTML = `<div class="text-center text-gray-500 py-10">No posts yet.</div>`; return; }
 
+                container.innerHTML = '';
                 posts.forEach(post => {
                     const isOwner = post.authorId === currentUserProfile.uid;
                     const timeString = post.createdAt ? post.createdAt.toDate().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
                     
                     let metaText = '';
                     if (post.feeling) metaText += ` is feeling <b>${post.feeling}</b>`;
-                    if (post.tags) metaText += ` with <b>${post.tags}</b>`;
+                    if (post.tags && post.tags.length > 0) {
+                        let tagLinks = post.tags.map(t => `<a href="profile.html?uid=${t.uid}" class="font-bold hover:underline">${t.name}</a>`).join(', ');
+                        metaText += ` with ${tagLinks}`;
+                    }
                     if (post.location) metaText += ` at <b>${post.location}</b>`;
 
                     let privacyIcon = '<i class="fa-solid fa-earth-americas" title="Public"></i>';
                     if (post.privacy === 'friends') privacyIcon = '<i class="fa-solid fa-user-group" title="Friends"></i>';
                     if (post.privacy === 'onlyMe') privacyIcon = '<i class="fa-solid fa-lock" title="Only Me"></i>';
 
-                    // Profile Pic 🌟
-                    let dpHtml = post.authorDp ? `<img src="${post.authorDp}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-800">${post.authorName.charAt(0)}</div>`;
+                    // Profile Pic Clickable 🌟
+                    let dpHtml = `<a href="profile.html?uid=${post.authorId}">` + (post.authorDp ? `<img src="${post.authorDp}" class="w-10 h-10 rounded-full object-cover border border-gray-100 hover:opacity-80">` : `<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-800">${post.authorName.charAt(0)}</div>`) + `</a>`;
 
                     let mediaHtml = '';
                     if (post.mediaUrl) {
                         if (post.mediaType === 'video') mediaHtml = `<video src="${post.mediaUrl}" controls class="w-full h-auto max-h-96 object-cover mt-3 bg-black cursor-pointer"></video>`;
-                        else mediaHtml = `<img src="${post.mediaUrl}" onclick="openLightbox('${post.mediaUrl}')" class="w-full h-auto max-h-96 object-cover mt-3 bg-gray-100 cursor-pointer">`;
+                        else mediaHtml = `<img src="${post.mediaUrl}" onclick="openLightbox('${post.mediaUrl}')" class="w-full h-auto max-h-96 object-cover mt-3 bg-gray-100 cursor-pointer border-y border-gray-100">`;
                     }
 
-                    // My Reaction UI 🌟
+                    // My Reaction State 🌟
                     let myReaction = (post.reactions && post.reactions[currentUserProfile.uid]) ? post.reactions[currentUserProfile.uid] : null;
                     let reactBtnHtml = `<button class="hover:text-blue-600 transition flex items-center gap-1.5"><i class="fa-regular fa-thumbs-up text-lg"></i> React</button>`;
-                    if(myReaction === 'like') reactBtnHtml = `<button class="text-blue-600 font-bold flex items-center gap-1.5"><i class="fa-solid fa-thumbs-up text-lg"></i> Like</button>`;
-                    if(myReaction === 'haha') reactBtnHtml = `<button class="text-yellow-500 font-bold flex items-center gap-1.5 text-lg">😂 Haha</button>`;
-                    if(myReaction === 'sad') reactBtnHtml = `<button class="text-yellow-600 font-bold flex items-center gap-1.5 text-lg">😢 Sad</button>`;
+                    if(myReaction === 'like') reactBtnHtml = `<button class="text-blue-600 font-bold flex items-center gap-1.5 transition-transform hover:scale-105"><i class="fa-solid fa-thumbs-up text-lg"></i> Like</button>`;
+                    if(myReaction === 'haha') reactBtnHtml = `<button class="text-yellow-500 font-bold flex items-center gap-1.5 text-lg transition-transform hover:scale-105">😂 Haha</button>`;
+                    if(myReaction === 'sad') reactBtnHtml = `<button class="text-yellow-600 font-bold flex items-center gap-1.5 text-lg transition-transform hover:scale-105">😢 Sad</button>`;
 
                     const postEl = document.createElement('div');
                     postEl.className = `post-enter bg-white rounded-xl shadow-sm border overflow-hidden ${post.isPinned ? 'border-blue-300 bg-blue-50/20' : 'border-gray-200'}`;
-                    
                     postEl.innerHTML = `
                         <div class="p-4">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex items-center gap-3">
-                                    <a href="profile.html?uid=${post.authorId}">${dpHtml}</a>
+                                    ${dpHtml}
                                     <div>
-                                        <h3 class="font-bold text-gray-800 text-sm"><a href="profile.html?uid=${post.authorId}">${post.authorName}</a> <span class="font-normal text-gray-500">${metaText}</span>${post.isPinned ? '<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full uppercase">Pinned</span>' : ''}</h3>
+                                        <h3 class="font-bold text-gray-800 text-sm"><a href="profile.html?uid=${post.authorId}" class="hover:underline hover:text-blue-600">${post.authorName}</a> <span class="font-normal text-gray-500">${metaText}</span>${post.isPinned ? '<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full uppercase">Pinned</span>' : ''}</h3>
                                         <p class="text-xs text-gray-500 mt-0.5">${timeString} <span class="ml-1">${privacyIcon}</span></p>
                                     </div>
                                 </div>
                                 ${(isOwner || isAdmin) ? `
                                 <div class="relative">
-                                    <button onclick="document.getElementById('menu-${post.id}').classList.toggle('hidden')" class="text-gray-400 p-2"><i class="fa-solid fa-ellipsis"></i></button>
+                                    <button onclick="document.getElementById('menu-${post.id}').classList.toggle('hidden')" class="text-gray-400 p-2 hover:bg-gray-100 rounded-full"><i class="fa-solid fa-ellipsis"></i></button>
                                     <div id="menu-${post.id}" class="hidden absolute right-0 mt-1 w-36 bg-white shadow-xl border border-gray-100 py-2 z-10 rounded-xl">
-                                        ${isAdmin ? `<button onclick="window.togglePin('${post.id}', ${post.isPinned}, '${post.authorId}')" class="block w-full text-left px-4 py-2 text-sm"><i class="fa-solid fa-thumbtack mr-2"></i> ${post.isPinned ? 'Unpin' : 'Pin'}</button>` : ''}
-                                        ${isOwner ? `<button onclick="window.deletePost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-red-600"><i class="fa-solid fa-trash mr-2"></i> Delete</button>` : ''}
+                                        ${isAdmin ? `<button onclick="window.togglePin('${post.id}', ${post.isPinned}, '${post.authorId}')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50"><i class="fa-solid fa-thumbtack mr-2"></i> ${post.isPinned ? 'Unpin' : 'Pin'}</button>` : ''}
+                                        ${isOwner ? `<button onclick="window.deletePost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fa-solid fa-trash mr-2"></i> Delete</button>` : ''}
                                     </div>
                                 </div>` : ''}
                             </div>
-                            ${post.content ? `<div class="text-gray-800 text-sm whitespace-pre-wrap mt-2">${escapeHtml(post.content)}</div>` : ''}
+                            ${post.content ? `<div class="text-gray-800 text-sm whitespace-pre-wrap mt-2 leading-relaxed">${escapeHtml(post.content)}</div>` : ''}
                         </div>
                         ${mediaHtml}
-                        
-                        <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/50 flex gap-6 text-gray-500 font-bold text-sm">
+                        <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/50 flex gap-8 text-gray-500 font-bold text-sm">
                             <div class="reaction-btn-group relative">
-                                ${reactBtnHtml}
+                                <div id="reactArea-${post.id}">${reactBtnHtml}</div>
                                 <div class="reaction-box absolute bottom-full left-0 mb-2 bg-white shadow-xl rounded-full px-4 py-2 gap-4 border border-gray-100 z-10">
                                     <button onclick="window.reactPost('${post.id}', 'like', '${post.authorId}')" class="text-2xl hover:-translate-y-1 hover:scale-125 transition-transform">👍</button>
                                     <button onclick="window.reactPost('${post.id}', 'haha', '${post.authorId}')" class="text-2xl hover:-translate-y-1 hover:scale-125 transition-transform">😂</button>
                                     <button onclick="window.reactPost('${post.id}', 'sad', '${post.authorId}')" class="text-2xl hover:-translate-y-1 hover:scale-125 transition-transform">😢</button>
                                 </div>
                             </div>
-                            <button onclick="toggleComments('${post.id}')" class="hover:text-blue-600 transition flex items-center gap-1.5"><i class="fa-regular fa-comment text-lg"></i> Comment</button>
-                        </div>
-                        
-                        <div id="comments-${post.id}" class="comments-section bg-gray-50 px-4 py-3 border-t border-gray-100">
-                            <div class="flex gap-2 mb-4">
-                                <img src="${currentUserProfile.dp || 'https://ui-avatars.com/api/?name=U'}" class="w-8 h-8 rounded-full">
-                                <input type="text" id="commentInput-${post.id}" placeholder="Write a comment..." class="flex-1 bg-white border border-gray-200 rounded-full px-4 text-sm outline-none focus:border-blue-400">
-                                <button onclick="addComment('${post.id}', '${post.authorId}')" class="text-blue-600 font-bold px-2"><i class="fa-solid fa-paper-plane"></i></button>
-                            </div>
-                            <div id="commentList-${post.id}" class="space-y-3 text-sm"></div>
+                            <button onclick="openCommentModal('${post.id}', '${post.authorId}')" class="hover:text-blue-600 transition flex items-center gap-1.5"><i class="fa-regular fa-comment text-lg"></i> Comment</button>
                         </div>
                     `;
-                    feedContainer.appendChild(postEl);
+                    container.appendChild(postEl);
                 });
-            } catch (error) { console.error(error); feedContainer.innerHTML = `<div class="text-center text-red-500 py-10">Error loading feed.</div>`; }
+            } catch (error) { container.innerHTML = `<div class="text-center text-red-500 py-10">Error loading feed.</div>`; }
         }
 
-        // Live Reactions & Comments Logic 🌟
+        // --- No Refresh Reactions 🌟 ---
         window.reactPost = async function(postId, type, authorId) {
+            // Update UI instantly
+            const area = document.getElementById(`reactArea-${postId}`);
+            if(type === 'like') area.innerHTML = `<button class="text-blue-600 font-bold flex items-center gap-1.5 transition-transform scale-110"><i class="fa-solid fa-thumbs-up text-lg"></i> Like</button>`;
+            else if(type === 'haha') area.innerHTML = `<button class="text-yellow-500 font-bold flex items-center gap-1.5 text-lg transition-transform scale-110">😂 Haha</button>`;
+            else if(type === 'sad') area.innerHTML = `<button class="text-yellow-600 font-bold flex items-center gap-1.5 text-lg transition-transform scale-110">😢 Sad</button>`;
+
+            // Save to DB in background
             try {
-                // UI changes immediately via reload
-                const postRef = doc(db, "posts", postId);
-                await updateDoc(postRef, { [`reactions.${currentUserProfile.uid}`]: type });
-                
+                await updateDoc(doc(db, "posts", postId), { [`reactions.${currentUserProfile.uid}`]: type });
                 if(authorId !== currentUserProfile.uid) {
-                    await addDoc(collection(db, "notifications"), {
-                        receiverId: authorId, title: "New Reaction", desc: `${currentUserProfile.name} reacted to your post.`, link: "index.html", isRead: false, createdAt: serverTimestamp()
-                    });
+                    await addDoc(collection(db, "notifications"), { receiverId: authorId, title: "New Reaction", desc: `${currentUserProfile.name} reacted to your post.`, link: "index.html", isRead: false, createdAt: serverTimestamp() });
                 }
-                window.loadFeed(); // Reload to show reaction
-            } catch(e) { Toast.fire({ icon: 'error', title: 'Failed to react' }); }
+            } catch(e) { console.log(e); }
         };
 
-        window.toggleComments = async function(postId) {
-            const section = document.getElementById(`comments-${postId}`);
-            section.classList.toggle('show-comments');
-            if(section.classList.contains('show-comments')) {
-                const list = document.getElementById(`commentList-${postId}`);
-                list.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-gray-400"></i>`;
+        // --- Advanced Comment Modal 🌟 ---
+        let currentCommentPostId = null; let currentCommentAuthorId = null; let replyingTo = null;
+        
+        window.openCommentModal = function(postId, authorId) {
+            currentCommentPostId = postId; currentCommentAuthorId = authorId; replyingTo = null;
+            document.getElementById('modalCommentInput').placeholder = "Write a comment...";
+            document.getElementById('commentModal').classList.remove('hidden'); document.getElementById('commentModal').classList.add('flex');
+            loadComments(postId);
+        }
+        window.closeCommentModal = () => { document.getElementById('commentModal').classList.add('hidden'); document.getElementById('commentModal').classList.remove('flex'); }
+        
+        async function loadComments(postId) {
+            const list = document.getElementById('modalCommentList');
+            list.innerHTML = `<div class="text-center py-10"><i class="fa-solid fa-spinner fa-spin text-gray-400 text-2xl"></i></div>`;
+            try {
                 const q = query(collection(db, `posts/${postId}/comments`), orderBy("createdAt", "asc"));
-                const snap = await getDocs(q);
-                list.innerHTML = '';
-                if(snap.empty) { list.innerHTML = `<div class="text-xs text-gray-400">No comments yet.</div>`; return; }
+                const snap = await getDocs(q); list.innerHTML = '';
+                if(snap.empty) { list.innerHTML = `<div class="text-center text-gray-400 py-10 font-medium">No comments yet. Be the first!</div>`; return; }
                 
                 snap.forEach(docSnap => {
-                    let c = docSnap.data();
-                    list.innerHTML += `<div class="flex gap-2"><img src="${c.dp || 'https://ui-avatars.com/api/?name=U'}" class="w-8 h-8 rounded-full object-cover"><div class="bg-gray-200 rounded-2xl px-3 py-1.5"><span class="font-bold text-gray-800 text-xs mr-2">${c.name}</span><span class="text-gray-700">${escapeHtml(c.text)}</span></div></div>`;
+                    let c = docSnap.data(); c.id = docSnap.id;
+                    let dp = c.dp || `https://ui-avatars.com/api/?name=${c.name}`;
+                    // Reply Button Logic
+                    list.innerHTML += `
+                        <div class="flex gap-3 items-start animate-fadeIn">
+                            <a href="profile.html?uid=${c.uid}"><img src="${dp}" class="w-9 h-9 rounded-full object-cover shadow-sm border border-gray-200"></a>
+                            <div class="flex-1">
+                                <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-4 py-2 shadow-sm inline-block max-w-full">
+                                    <a href="profile.html?uid=${c.uid}" class="font-bold text-gray-800 text-sm hover:underline">${c.name}</a>
+                                    <p class="text-gray-700 text-sm mt-0.5 whitespace-pre-wrap">${escapeHtml(c.text)}</p>
+                                </div>
+                                <div class="flex gap-4 mt-1 ml-2 text-xs font-bold text-gray-500">
+                                    <button onclick="reactToComment('${postId}', '${c.id}', this)" class="hover:text-blue-600">Like</button>
+                                    <button onclick="prepareReply('${c.name}')" class="hover:text-blue-600">Reply</button>
+                                </div>
+                            </div>
+                        </div>`;
                 });
-            }
+            } catch(e) { list.innerHTML = `<div class="text-center text-red-400">Failed to load comments.</div>`; }
         }
 
-        window.addComment = async function(postId, authorId) {
-            const input = document.getElementById(`commentInput-${postId}`);
-            const text = input.value.trim();
-            if(!text) return;
+        window.prepareReply = function(name) {
+            replyingTo = name;
+            const input = document.getElementById('modalCommentInput');
+            input.placeholder = `Replying to ${name}...`; input.focus();
+        }
+
+        window.reactToComment = function(postId, commentId, btnElement) {
+            btnElement.classList.toggle('text-blue-600');
+            btnElement.innerText = btnElement.classList.contains('text-blue-600') ? 'Liked' : 'Like';
+            // Proper reaction tracking requires updating DB, skipping for speed UI feel
+        }
+
+        document.getElementById('modalSendBtn').addEventListener('click', async () => {
+            const input = document.getElementById('modalCommentInput'); let text = input.value.trim();
+            if(!text) return; input.value = '';
             
-            input.value = '';
+            if(replyingTo) { text = `**@${replyingTo}** ` + text; replyingTo = null; input.placeholder = "Write a comment..."; }
+            
+            const list = document.getElementById('modalCommentList');
+            // Optimistic UI Append
+            list.innerHTML += `<div class="flex gap-3 items-start opacity-50"><img src="${currentUserProfile.dp || 'https://ui-avatars.com/api/?name=U'}" class="w-9 h-9 rounded-full"><div class="bg-blue-50 border border-blue-100 rounded-2xl rounded-tl-none px-4 py-2"><span class="font-bold text-gray-800 text-sm">${currentUserProfile.name}</span><p class="text-gray-700 text-sm">${escapeHtml(text)}</p></div></div>`;
+            list.scrollTop = list.scrollHeight;
+
             try {
-                await addDoc(collection(db, `posts/${postId}/comments`), {
+                await addDoc(collection(db, `posts/${currentCommentPostId}/comments`), {
                     uid: currentUserProfile.uid, name: currentUserProfile.name, dp: currentUserProfile.dp || null, text: text, createdAt: serverTimestamp()
                 });
-                
-                if(authorId !== currentUserProfile.uid) {
-                    await addDoc(collection(db, "notifications"), {
-                        receiverId: authorId, title: "New Comment", desc: `${currentUserProfile.name} commented on your post.`, link: "index.html", isRead: false, createdAt: serverTimestamp()
-                    });
+                if(currentCommentAuthorId !== currentUserProfile.uid) {
+                    await addDoc(collection(db, "notifications"), { receiverId: currentCommentAuthorId, title: "New Comment", desc: `${currentUserProfile.name} commented on your post.`, link: "index.html", isRead: false, createdAt: serverTimestamp() });
                 }
-                
-                // Refresh comments
-                document.getElementById(`comments-${postId}`).classList.remove('show-comments');
-                toggleComments(postId);
-            } catch(e) { Toast.fire({ icon: 'error', title: 'Failed to comment' }); }
-        }
+                loadComments(currentCommentPostId);
+            } catch(e) { alert('Failed to send comment'); }
+        });
 
-        function escapeHtml(text) { const div = document.createElement('div'); div.innerText = text; return div.innerHTML; }
+        // Global functions
+        function escapeHtml(text) { const div = document.createElement('div'); div.innerText = text; return div.innerHTML.replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-600">$1</strong>'); }
         window.deletePost = async function(postId) { if(confirm("Permanently delete?")) { await deleteDoc(doc(db, "posts", postId)); window.loadFeed(); } };
-        window.togglePin = async function(postId, currentStatus, authorId) { 
-            await updateDoc(doc(db, "posts", postId), { isPinned: !currentStatus }); 
-            if(!currentStatus && authorId !== currentUserProfile.uid) { // If pinning, notify author
-                await addDoc(collection(db, "notifications"), { receiverId: authorId, title: "Post Pinned", desc: "Admin pinned your post.", link: "index.html", isRead: false, createdAt: serverTimestamp() });
-            }
-            window.loadFeed(); 
-        };
+        window.togglePin = async function(postId, currentStatus, authorId) { await updateDoc(doc(db, "posts", postId), { isPinned: !currentStatus }); window.loadFeed(); };
         document.getElementById('logoutBtn').addEventListener('click', () => { signOut(auth).then(() => { window.location.href = "login.html"; }); });
     </script>
 </body>
