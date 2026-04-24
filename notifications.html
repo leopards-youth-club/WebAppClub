@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications | Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { padding-top: 60px; background-color: #f3f4f6; font-family: 'Inter', sans-serif; -webkit-user-select: none; user-select: none; }
+        #bottomNav { transition: transform 0.3s ease-in-out; }
+        .hide-nav { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+        .dropdown-content { display: none; }
+        .show-dropdown { display: block; }
+        
+        /* Advanced Animations */
+        .notif-item { animation: slideIn 0.3s ease-out forwards; opacity: 0; transform: translateX(20px); }
+        @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+        
+        .unread-indicator { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <header class="fixed w-full top-0 z-50 shadow-sm flex flex-col">
+        <div class="flex justify-between items-center px-4 py-3 bg-white z-50 border-b border-gray-100">
+            <img src="logo.png" alt="Logo" class="h-10 object-contain cursor-pointer" onclick="window.location.href='index.html'">
+            <div class="flex items-center gap-4">
+                <a href="members.html?search=true" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition text-lg"><i class="fa-solid fa-magnifying-glass"></i></a>
+                <div class="relative">
+                    <div id="profileBtn" class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold cursor-pointer shadow-md hover:scale-105 transition-transform"><i class="fa-solid fa-user"></i></div>
+                    <div id="profileMenu" class="dropdown-content absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 origin-top-right transition-all">
+                        <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-blue-600"><i class="fa-solid fa-circle-user mr-2"></i> My Profile</a>
+                        <hr class="my-1 border-gray-100">
+                        <button id="logoutBtn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"><i class="fa-solid fa-right-from-bracket mr-2"></i> Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <nav id="bottomNav" class="flex justify-around items-center bg-white px-2 py-1 shadow-md absolute w-full top-full -z-10">
+            <a href="index.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl"><i class="fa-solid fa-house"></i></a>
+            <a href="requests.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl"><i class="fa-solid fa-user-plus"></i></a>
+            <a href="members.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl"><i class="fa-solid fa-users"></i></a>
+            <a href="notifications.html" class="flex-1 flex justify-center py-3 text-blue-600 text-2xl border-b-2 border-blue-600"><i class="fa-solid fa-bell"></i></a>
+            <a href="admindashboard.html" id="adminTab" class="hidden flex-1 flex justify-center py-3 text-red-400 hover:text-red-600 transition-colors text-2xl"><i class="fa-solid fa-shield-halved"></i></a>
+        </nav>
+    </header>
+
+    <main class="max-w-2xl mx-auto px-4 pb-10 mt-6">
+        
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Notifications</h1>
+                <p class="text-sm text-gray-500 mt-1 font-medium" id="unreadCountText">Loading...</p>
+            </div>
+            <button onclick="markAllAsRead()" id="markAllBtn" class="text-sm font-bold text-blue-600 hover:text-blue-800 transition hidden bg-blue-50 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-check-double mr-1"></i> Mark all as read</button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div id="notificationsContainer" class="divide-y divide-gray-100">
+                <div class="text-center text-gray-500 py-16">
+                    <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+                    <p class="mt-3 font-medium">Loading notifications...</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 🛑 ඔබේ විස්තර දාන්න 🛑
+        const firebaseConfig = {
+            apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
+            authDomain: "mysocialapp-27824.firebaseapp.com",
+            projectId: "mysocialapp-27824",
+            storageBucket: "mysocialapp-27824.firebasestorage.app",
+            messagingSenderId: "774980218922",
+            appId: "1:774980218922:web:24b832c42b16d42a025353"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUserProfile = null;
+        let unreadDocs = []; // Store unread document references for Batch Update
+
+        // Security / Keyboard shortcuts block
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'PrintScreen' || (e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'c'))) e.preventDefault();
+        });
+
+        // Navbar scroll logic
+        let lastScrollY = window.scrollY;
+        window.addEventListener("scroll", () => {
+            const bottomNav = document.getElementById("bottomNav");
+            if (window.scrollY > lastScrollY && window.scrollY > 50) bottomNav.classList.add("hide-nav");
+            else bottomNav.classList.remove("hide-nav");
+            lastScrollY = window.scrollY;
+        });
+
+        document.getElementById('profileBtn').addEventListener('click', () => document.getElementById('profileMenu').classList.toggle('show-dropdown'));
+
+        // Auth Check
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = "login.html"; return; }
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                currentUserProfile = userDoc.data();
+                if (user.email === "sandusha@gmail.com") { document.getElementById('adminTab').classList.remove('hidden'); document.getElementById('adminTab').classList.add('flex'); }
+                loadNotifications();
+            }
+        });
+
+        // Advanced Time-Ago Function 🌟
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = seconds / 31536000; if (interval > 1) return Math.floor(interval) + "y ago";
+            interval = seconds / 2592000; if (interval > 1) return Math.floor(interval) + "mo ago";
+            interval = seconds / 86400; if (interval > 1) return Math.floor(interval) + "d ago";
+            interval = seconds / 3600; if (interval > 1) return Math.floor(interval) + "h ago";
+            interval = seconds / 60; if (interval > 1) return Math.floor(interval) + "m ago";
+            return "Just now";
+        }
+
+        // Load Notifications 🌟
+        async function loadNotifications() {
+            const container = document.getElementById('notificationsContainer');
+            unreadDocs = [];
+
+            try {
+                // Fetch notifications for me, ordered by newest first
+                const q = query(collection(db, "notifications"), where("receiverId", "==", currentUserProfile.uid));
+                const snapshot = await getDocs(q);
+                
+                let notifications = [];
+                snapshot.forEach(doc => { let n = doc.data(); n.id = doc.id; notifications.push(n); });
+                
+                // Sort by date (JS sort is safer than Firebase index errors)
+                notifications.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                container.innerHTML = '';
+                
+                if (notifications.length === 0) {
+                    document.getElementById('unreadCountText').innerText = "You're all caught up!";
+                    container.innerHTML = `
+                        <div class="text-center py-16 px-4">
+                            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-gray-100">
+                                <i class="fa-regular fa-bell-slash text-4xl text-gray-300"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800">No Notifications</h3>
+                            <p class="text-sm text-gray-500 mt-1">When you get friend requests or likes, they'll show up here.</p>
+                        </div>`;
+                    return;
+                }
+
+                let delay = 0;
+                
+                notifications.forEach(notif => {
+                    const isUnread = !notif.isRead;
+                    if (isUnread) unreadDocs.push(doc(db, "notifications", notif.id));
+
+                    const dateObj = notif.createdAt ? notif.createdAt.toDate() : new Date();
+                    const timeString = timeAgo(dateObj);
+
+                    // Determine Icon & Colors based on title
+                    let iconHtml = ''; let bgClass = '';
+                    if (notif.title.includes('Secret')) { iconHtml = '<i class="fa-solid fa-user-secret text-indigo-600"></i>'; bgClass = 'bg-indigo-100'; }
+                    else if (notif.title.includes('Request')) { iconHtml = '<i class="fa-solid fa-user-plus text-blue-600"></i>'; bgClass = 'bg-blue-100'; }
+                    else if (notif.title.includes('Accepted')) { iconHtml = '<i class="fa-solid fa-user-check text-green-600"></i>'; bgClass = 'bg-green-100'; }
+                    else if (notif.title.includes('Reaction')) { iconHtml = '<i class="fa-solid fa-heart text-pink-500"></i>'; bgClass = 'bg-pink-100'; }
+                    else if (notif.title.includes('Comment')) { iconHtml = '<i class="fa-solid fa-comment text-sky-500"></i>'; bgClass = 'bg-sky-100'; }
+                    else if (notif.title.includes('Pinned')) { iconHtml = '<i class="fa-solid fa-thumbtack text-yellow-600"></i>'; bgClass = 'bg-yellow-100'; }
+                    else { iconHtml = '<i class="fa-solid fa-bell text-gray-600"></i>'; bgClass = 'bg-gray-100'; }
+
+                    const itemBg = isUnread ? 'bg-blue-50/40 hover:bg-blue-50/70' : 'bg-white hover:bg-gray-50';
+                    const textClass = isUnread ? 'text-gray-900 font-bold' : 'text-gray-700 font-medium';
+                    const dotHtml = isUnread ? `<div class="w-2.5 h-2.5 bg-blue-600 rounded-full unread-indicator ml-auto flex-shrink-0"></div>` : '';
+
+                    const el = document.createElement('div');
+                    el.className = `notif-item p-4 transition-colors cursor-pointer flex items-center gap-4 border-l-4 ${isUnread ? 'border-blue-500' : 'border-transparent'} ${itemBg}`;
+                    el.style.animationDelay = `${delay}s`;
+                    delay += 0.05; // Staggered entrance animation
+
+                    // Click handler
+                    el.onclick = () => window.handleClick(notif.id, notif.link, notif.isRead);
+
+                    el.innerHTML = `
+                        <div class="w-12 h-12 rounded-full ${bgClass} flex items-center justify-center text-xl flex-shrink-0 border border-white shadow-sm">
+                            ${iconHtml}
+                        </div>
+                        <div class="flex-1 pr-2">
+                            <p class="${textClass} text-sm leading-snug">${notif.desc}</p>
+                            <p class="text-xs text-gray-500 mt-1.5 font-medium"><i class="fa-regular fa-clock mr-1"></i> ${timeString}</p>
+                        </div>
+                        ${dotHtml}
+                    `;
+                    container.appendChild(el);
+                });
+
+                // Update Header UI
+                if (unreadDocs.length > 0) {
+                    document.getElementById('unreadCountText').innerText = `You have ${unreadDocs.length} unread notifications.`;
+                    document.getElementById('markAllBtn').classList.remove('hidden');
+                } else {
+                    document.getElementById('unreadCountText').innerText = "You're all caught up!";
+                    document.getElementById('markAllBtn').classList.add('hidden');
+                }
+
+            } catch (error) { 
+                console.error(error); 
+                container.innerHTML = `<div class="text-center text-red-500 py-10">Failed to load notifications.</div>`; 
+            }
+        }
+
+        // Notification Click Logic (Mark Read & Redirect) 🌟
+        window.handleClick = async function(notifId, link, isAlreadyRead) {
+            if (!isAlreadyRead) {
+                try { await updateDoc(doc(db, "notifications", notifId), { isRead: true }); } 
+                catch (e) { console.error("Could not mark as read", e); }
+            }
+            window.location.href = link;
+        };
+
+        // Mark All As Read Logic (Batch Update) 🌟
+        window.markAllAsRead = async function() {
+            if (unreadDocs.length === 0) return;
+            
+            const btn = document.getElementById('markAllBtn');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing...`;
+            
+            try {
+                const batch = writeBatch(db);
+                unreadDocs.forEach(docRef => {
+                    batch.update(docRef, { isRead: true });
+                });
+                await batch.commit();
+                
+                // Show success toast
+                Swal.fire({ toast: true, position: 'bottom', icon: 'success', title: 'All marked as read', showConfirmButton: false, timer: 1500, customClass: { popup: 'bg-gray-900 text-white rounded-full text-sm' }});
+                
+                loadNotifications(); // Reload list
+            } catch(e) {
+                Swal.fire('Error', 'Failed to update notifications', 'error');
+                btn.innerHTML = `<i class="fa-solid fa-check-double mr-1"></i> Mark all as read`;
+            }
+        };
+
+        document.getElementById('logoutBtn').addEventListener('click', () => { signOut(auth).then(() => { window.location.href = "login.html"; }); });
+    </script>
+</body>
+</html>
