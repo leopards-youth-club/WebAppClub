@@ -94,6 +94,7 @@
             <a href="requests.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl"><i class="fa-solid fa-user-plus"></i></a>
             <a href="members.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl"><i class="fa-solid fa-users"></i></a>
             <a href="notifications.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl"><i class="fa-solid fa-bell"></i></a>
+            <a href="admindashboard.html" id="adminTab" class="hidden flex-1 flex justify-center py-3 text-red-400 hover:text-red-600 transition-colors text-2xl"><i class="fa-solid fa-shield-halved"></i></a>
         </nav>
     </header>
 
@@ -158,6 +159,7 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Firebase & Cloudinary Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
             authDomain: "mysocialapp-27824.firebaseapp.com",
@@ -169,15 +171,26 @@
         const CLOUD_NAME = "dt2y6gent"; 
         const UPLOAD_PRESET = "ml_default";
 
-        const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig); 
+        const auth = getAuth(app); 
+        const db = getFirestore(app);
 
         let currentUserProfile = null; let isAdmin = false;
         let postMeta = { feeling: null, location: null, tags: [], file: null, fileType: null };
         let selectedPrivacy = "public";
 
-        // Security Shortcuts
+        // Toast Notification
+        const Toast = Swal.mixin({
+            toast: true, position: 'bottom', showConfirmButton: false, timer: 2000,
+            customClass: { popup: 'bg-gray-900 text-white rounded-full px-4 py-2 text-sm' }
+        });
+
+        // Security Shortcuts Prevention
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'PrintScreen' || (e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'c'))) e.preventDefault();
+            if (e.key === 'PrintScreen' || (e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'c'))) {
+                e.preventDefault();
+                Toast.fire({ icon: 'warning', title: 'Action blocked for security' });
+            }
         });
 
         // Scroll hiding
@@ -189,6 +202,7 @@
             lastScrollY = window.scrollY;
         });
 
+        // Authentication & Load User
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "login.html"; return; }
             const userDoc = await getDoc(doc(db, "users", user.uid));
@@ -201,31 +215,42 @@
                 document.getElementById('postBoxDp').src = dp;
                 document.getElementById('modalMyDp').src = dp;
 
-                if (user.email === "sandusha@gmail.com") isAdmin = true;
+                if (user.email === "sandusha@gmail.com") {
+                    isAdmin = true;
+                    document.getElementById('adminTab').classList.remove('hidden');
+                    document.getElementById('adminTab').classList.add('flex');
+                }
                 window.loadFeed(); 
             }
         });
 
-        // Toggle Privacy
+        // Privacy Selection
         document.getElementById('privacyBtn').addEventListener('click', () => document.getElementById('privacyMenu').classList.toggle('hidden'));
         window.setPrivacy = function(val, iconClass) {
             selectedPrivacy = val; document.getElementById('currentPrivacyIcon').className = `fa-solid ${iconClass}`;
             document.getElementById('privacyMenu').classList.add('hidden');
         };
 
-        // --- Tagging ---
+        // --- Tagging Logic ---
         window.openTagModal = async function() {
             const container = document.getElementById('friendsListContainer');
             document.getElementById('tagModal').classList.remove('hidden'); document.getElementById('tagModal').classList.add('flex');
-            if(currentUserProfile.friends.length === 0) { container.innerHTML = '<div class="text-center text-sm text-gray-500 py-4">No friends added yet.</div>'; return; }
-            container.innerHTML = '';
+            
+            if(currentUserProfile.friends.length === 0) { 
+                container.innerHTML = '<div class="text-center text-sm text-gray-500 py-4">No friends added yet.</div>'; return; 
+            }
+            container.innerHTML = '<div class="text-center text-sm text-gray-500 py-4"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+            
+            let htmlContent = '';
             for (let fid of currentUserProfile.friends) {
                 const fDoc = await getDoc(doc(db, "users", fid));
                 if(fDoc.exists()) {
-                    let f = fDoc.data(); let isChecked = postMeta.tags.some(t => t.uid === fid) ? 'checked' : '';
-                    container.innerHTML += `<label class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"><input type="checkbox" value="${fid}" data-name="${f.name}" class="tag-checkbox w-4 h-4 text-blue-600 rounded"> <div class="flex-1 text-gray-800 font-medium text-sm">${f.name}</div></label>`;
+                    let f = fDoc.data(); 
+                    let isChecked = postMeta.tags.some(t => t.uid === fid) ? 'checked' : '';
+                    htmlContent += `<label class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"><input type="checkbox" value="${fid}" data-name="${f.name}" class="tag-checkbox w-4 h-4 text-blue-600 rounded" ${isChecked}> <div class="flex-1 text-gray-800 font-medium text-sm">${f.name}</div></label>`;
                 }
             }
+            container.innerHTML = htmlContent;
         }
         window.closeTagModal = () => { document.getElementById('tagModal').classList.add('hidden'); document.getElementById('tagModal').classList.remove('flex'); }
         window.saveTags = () => {
@@ -234,7 +259,7 @@
             updateMetaPreview(); closeTagModal();
         }
 
-        // Compressor
+        // Image Compressor
         async function compressImage(file) {
             if (!file.type.startsWith('image/')) return file;
             return new Promise((resolve) => {
@@ -271,6 +296,7 @@
         });
         document.getElementById('removeMediaBtn').addEventListener('click', () => { postMeta.file = null; postMeta.fileType = null; document.getElementById('mediaUpload').value = ''; document.getElementById('mediaPreviewContainer').classList.add('hidden'); document.getElementById('videoPreview').pause(); });
 
+        // --- Create Post Logic ---
         document.getElementById('createPostBtn').addEventListener('click', async () => {
             const content = document.getElementById('postContent').value.trim();
             if (!content && !postMeta.file) return;
@@ -288,6 +314,7 @@
                         const xhr = new XMLHttpRequest(); xhr.open('POST', url, true);
                         xhr.upload.onprogress = (e) => { if (e.lengthComputable) document.getElementById('uploadProgressBar').style.width = ((e.loaded / e.total) * 100) + '%'; };
                         xhr.onload = () => { if (xhr.status === 200) { mediaUrl = JSON.parse(xhr.responseText).secure_url; resolve(); } else reject(); };
+                        xhr.onerror = () => reject();
                         xhr.send(fd);
                     });
                     setTimeout(() => { document.getElementById('uploadProgressContainer').classList.add('hidden'); document.getElementById('uploadProgressBar').style.width = '0%'; }, 1000);
@@ -310,7 +337,7 @@
         window.openLightbox = function(url) { document.getElementById('lightboxImg').src = url; document.getElementById('lightbox').classList.remove('hidden'); }
         window.closeLightbox = function() { document.getElementById('lightbox').classList.add('hidden'); document.getElementById('lightboxImg').src = ''; }
 
-        // --- Load Feed ---
+        // --- Load Feed (Bug Fixed Version) ---
         window.loadFeed = async function() {
             const container = document.getElementById('feedContainer');
             container.innerHTML = `<div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>`;
@@ -325,7 +352,9 @@
                     if (p.privacy === 'friends' && p.authorId !== currentUserProfile.uid && !currentUserProfile.friends.includes(p.authorId)) return;
                     posts.push(p);
                 });
-                posts.sort((a, b) => b.isPinned - a.isPinned);
+                
+                posts.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
+                
                 if (posts.length === 0) { container.innerHTML = `<div class="text-center text-gray-500 py-10">No posts yet.</div>`; return; }
 
                 container.innerHTML = '';
@@ -335,18 +364,24 @@
                     
                     let metaText = '';
                     if (post.feeling) metaText += ` is feeling <b>${post.feeling}</b>`;
-                    if (post.tags && post.tags.length > 0) {
-                        let tagLinks = post.tags.map(t => `<a href="profile.html?uid=${t.uid}" class="font-bold hover:underline">${t.name}</a>`).join(', ');
-                        metaText += ` with ${tagLinks}`;
+                    
+                    // Fixed Tag Handling for both Old strings & New arrays
+                    if (post.tags) {
+                        if (Array.isArray(post.tags) && post.tags.length > 0) {
+                            let tagLinks = post.tags.map(t => `<a href="profile.html?uid=${t.uid}" class="font-bold hover:underline hover:text-blue-600 text-gray-800">${t.name}</a>`).join(', ');
+                            metaText += ` with ${tagLinks}`;
+                        } else if (typeof post.tags === 'string' && post.tags.trim() !== '') {
+                            metaText += ` with <b>${post.tags}</b>`;
+                        }
                     }
+                    
                     if (post.location) metaText += ` at <b>${post.location}</b>`;
 
                     let privacyIcon = '<i class="fa-solid fa-earth-americas" title="Public"></i>';
                     if (post.privacy === 'friends') privacyIcon = '<i class="fa-solid fa-user-group" title="Friends"></i>';
                     if (post.privacy === 'onlyMe') privacyIcon = '<i class="fa-solid fa-lock" title="Only Me"></i>';
 
-                    // Profile Pic Clickable 🌟
-                    let dpHtml = `<a href="profile.html?uid=${post.authorId}">` + (post.authorDp ? `<img src="${post.authorDp}" class="w-10 h-10 rounded-full object-cover border border-gray-100 hover:opacity-80">` : `<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-800">${post.authorName.charAt(0)}</div>`) + `</a>`;
+                    let dpHtml = `<a href="profile.html?uid=${post.authorId}">` + (post.authorDp ? `<img src="${post.authorDp}" class="w-10 h-10 rounded-full object-cover border border-gray-100 hover:opacity-80 transition cursor-pointer">` : `<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-800 hover:opacity-80 transition cursor-pointer">${post.authorName.charAt(0)}</div>`) + `</a>`;
 
                     let mediaHtml = '';
                     if (post.mediaUrl) {
@@ -354,7 +389,6 @@
                         else mediaHtml = `<img src="${post.mediaUrl}" onclick="openLightbox('${post.mediaUrl}')" class="w-full h-auto max-h-96 object-cover mt-3 bg-gray-100 cursor-pointer border-y border-gray-100">`;
                     }
 
-                    // My Reaction State 🌟
                     let myReaction = (post.reactions && post.reactions[currentUserProfile.uid]) ? post.reactions[currentUserProfile.uid] : null;
                     let reactBtnHtml = `<button class="hover:text-blue-600 transition flex items-center gap-1.5"><i class="fa-regular fa-thumbs-up text-lg"></i> React</button>`;
                     if(myReaction === 'like') reactBtnHtml = `<button class="text-blue-600 font-bold flex items-center gap-1.5 transition-transform hover:scale-105"><i class="fa-solid fa-thumbs-up text-lg"></i> Like</button>`;
@@ -399,27 +433,25 @@
                     `;
                     container.appendChild(postEl);
                 });
-            } catch (error) { container.innerHTML = `<div class="text-center text-red-500 py-10">Error loading feed.</div>`; }
+            } catch (error) { console.error(error); container.innerHTML = `<div class="text-center text-red-500 py-10">Error loading feed.</div>`; }
         }
 
-        // --- No Refresh Reactions 🌟 ---
+        // --- Live Reactions Logic ---
         window.reactPost = async function(postId, type, authorId) {
-            // Update UI instantly
             const area = document.getElementById(`reactArea-${postId}`);
             if(type === 'like') area.innerHTML = `<button class="text-blue-600 font-bold flex items-center gap-1.5 transition-transform scale-110"><i class="fa-solid fa-thumbs-up text-lg"></i> Like</button>`;
             else if(type === 'haha') area.innerHTML = `<button class="text-yellow-500 font-bold flex items-center gap-1.5 text-lg transition-transform scale-110">😂 Haha</button>`;
             else if(type === 'sad') area.innerHTML = `<button class="text-yellow-600 font-bold flex items-center gap-1.5 text-lg transition-transform scale-110">😢 Sad</button>`;
 
-            // Save to DB in background
             try {
                 await updateDoc(doc(db, "posts", postId), { [`reactions.${currentUserProfile.uid}`]: type });
                 if(authorId !== currentUserProfile.uid) {
                     await addDoc(collection(db, "notifications"), { receiverId: authorId, title: "New Reaction", desc: `${currentUserProfile.name} reacted to your post.`, link: "index.html", isRead: false, createdAt: serverTimestamp() });
                 }
-            } catch(e) { console.log(e); }
+            } catch(e) { Toast.fire({ icon: 'error', title: 'Failed to react' }); }
         };
 
-        // --- Advanced Comment Modal 🌟 ---
+        // --- Advanced Comment Modal Logic ---
         let currentCommentPostId = null; let currentCommentAuthorId = null; let replyingTo = null;
         
         window.openCommentModal = function(postId, authorId) {
@@ -441,13 +473,12 @@
                 snap.forEach(docSnap => {
                     let c = docSnap.data(); c.id = docSnap.id;
                     let dp = c.dp || `https://ui-avatars.com/api/?name=${c.name}`;
-                    // Reply Button Logic
                     list.innerHTML += `
                         <div class="flex gap-3 items-start animate-fadeIn">
                             <a href="profile.html?uid=${c.uid}"><img src="${dp}" class="w-9 h-9 rounded-full object-cover shadow-sm border border-gray-200"></a>
                             <div class="flex-1">
                                 <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-4 py-2 shadow-sm inline-block max-w-full">
-                                    <a href="profile.html?uid=${c.uid}" class="font-bold text-gray-800 text-sm hover:underline">${c.name}</a>
+                                    <a href="profile.html?uid=${c.uid}" class="font-bold text-gray-800 text-sm hover:underline hover:text-blue-600">${c.name}</a>
                                     <p class="text-gray-700 text-sm mt-0.5 whitespace-pre-wrap">${escapeHtml(c.text)}</p>
                                 </div>
                                 <div class="flex gap-4 mt-1 ml-2 text-xs font-bold text-gray-500">
@@ -469,7 +500,6 @@
         window.reactToComment = function(postId, commentId, btnElement) {
             btnElement.classList.toggle('text-blue-600');
             btnElement.innerText = btnElement.classList.contains('text-blue-600') ? 'Liked' : 'Like';
-            // Proper reaction tracking requires updating DB, skipping for speed UI feel
         }
 
         document.getElementById('modalSendBtn').addEventListener('click', async () => {
@@ -480,7 +510,7 @@
             
             const list = document.getElementById('modalCommentList');
             // Optimistic UI Append
-            list.innerHTML += `<div class="flex gap-3 items-start opacity-50"><img src="${currentUserProfile.dp || 'https://ui-avatars.com/api/?name=U'}" class="w-9 h-9 rounded-full"><div class="bg-blue-50 border border-blue-100 rounded-2xl rounded-tl-none px-4 py-2"><span class="font-bold text-gray-800 text-sm">${currentUserProfile.name}</span><p class="text-gray-700 text-sm">${escapeHtml(text)}</p></div></div>`;
+            list.innerHTML += `<div class="flex gap-3 items-start opacity-50"><img src="${currentUserProfile.dp || 'https://ui-avatars.com/api/?name=U'}" class="w-9 h-9 rounded-full object-cover shadow-sm"><div class="bg-blue-50 border border-blue-100 rounded-2xl rounded-tl-none px-4 py-2"><span class="font-bold text-gray-800 text-sm">${currentUserProfile.name}</span><p class="text-gray-700 text-sm">${escapeHtml(text)}</p></div></div>`;
             list.scrollTop = list.scrollHeight;
 
             try {
@@ -491,13 +521,19 @@
                     await addDoc(collection(db, "notifications"), { receiverId: currentCommentAuthorId, title: "New Comment", desc: `${currentUserProfile.name} commented on your post.`, link: "index.html", isRead: false, createdAt: serverTimestamp() });
                 }
                 loadComments(currentCommentPostId);
-            } catch(e) { alert('Failed to send comment'); }
+            } catch(e) { Toast.fire({ icon: 'error', title: 'Failed to send comment' }); }
         });
 
-        // Global functions
+        // Global Utility Functions
         function escapeHtml(text) { const div = document.createElement('div'); div.innerText = text; return div.innerHTML.replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-600">$1</strong>'); }
         window.deletePost = async function(postId) { if(confirm("Permanently delete?")) { await deleteDoc(doc(db, "posts", postId)); window.loadFeed(); } };
-        window.togglePin = async function(postId, currentStatus, authorId) { await updateDoc(doc(db, "posts", postId), { isPinned: !currentStatus }); window.loadFeed(); };
+        window.togglePin = async function(postId, currentStatus, authorId) { 
+            await updateDoc(doc(db, "posts", postId), { isPinned: !currentStatus }); 
+            if(!currentStatus && authorId !== currentUserProfile.uid) { 
+                await addDoc(collection(db, "notifications"), { receiverId: authorId, title: "Post Pinned", desc: "Admin pinned your post.", link: "index.html", isRead: false, createdAt: serverTimestamp() });
+            }
+            window.loadFeed(); 
+        };
         document.getElementById('logoutBtn').addEventListener('click', () => { signOut(auth).then(() => { window.location.href = "login.html"; }); });
     </script>
 </body>
