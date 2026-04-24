@@ -15,18 +15,11 @@
         .nav-scroller::-webkit-scrollbar { display: none; }
         .dropdown-content { display: none; }
         .show-dropdown { display: block; }
-        
-        /* Post Animation */
         .post-enter { animation: slideUpFade 0.5s ease-out forwards; opacity: 0; transform: translateY(20px); }
-        @keyframes slideUpFade {
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Progress Bar Animation */
+        @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
         .progress-bar-stripes {
             background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
-            background-size: 1rem 1rem;
-            animation: progress-stripes 1s linear infinite;
+            background-size: 1rem 1rem; animation: progress-stripes 1s linear infinite;
         }
         @keyframes progress-stripes { from { background-position: 1rem 0; } to { background-position: 0 0; } }
     </style>
@@ -53,38 +46,25 @@
         </div>
         
         <nav class="flex justify-around items-center bg-white px-2 py-1">
-            <a href="index.html" class="flex-1 flex justify-center py-3 text-blue-600 text-2xl border-b-2 border-blue-600" title="Feed">
-                <i class="fa-solid fa-house"></i>
-            </a>
-            <a href="requests.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Requests">
-                <i class="fa-solid fa-user-plus"></i>
-            </a>
-            <a href="members.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Members">
-                <i class="fa-solid fa-users"></i>
-            </a>
-            <a href="notifications.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Notifications">
-                <i class="fa-solid fa-bell"></i>
-            </a>
-            <a href="admindashboard.html" id="adminTab" class="hidden flex-1 flex justify-center py-3 text-red-400 hover:text-red-600 transition-colors text-2xl" title="Admin Panel">
-                <i class="fa-solid fa-shield-halved"></i>
-            </a>
+            <a href="index.html" class="flex-1 flex justify-center py-3 text-blue-600 text-2xl border-b-2 border-blue-600" title="Feed"><i class="fa-solid fa-house"></i></a>
+            <a href="requests.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Requests"><i class="fa-solid fa-user-plus"></i></a>
+            <a href="members.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Members"><i class="fa-solid fa-users"></i></a>
+            <a href="notifications.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Notifications"><i class="fa-solid fa-bell"></i></a>
+            <a href="admindashboard.html" id="adminTab" class="hidden flex-1 flex justify-center py-3 text-red-400 hover:text-red-600 transition-colors text-2xl" title="Admin Panel"><i class="fa-solid fa-shield-halved"></i></a>
         </nav>
     </header>
 
     <main class="max-w-2xl mx-auto px-4 pb-10">
-        
         <div class="bg-white rounded-xl shadow-md p-4 mb-6 border border-gray-100 transform transition-all hover:shadow-lg">
             <div class="flex gap-3">
-                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0">
-                    <i class="fa-solid fa-user"></i>
-                </div>
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0"><i class="fa-solid fa-user"></i></div>
                 <textarea id="postContent" class="w-full bg-gray-50 hover:bg-gray-100 focus:bg-white rounded-xl p-3 outline-none resize-none transition-colors border border-transparent focus:border-blue-300" rows="3" placeholder="What's on your mind?"></textarea>
             </div>
 
             <div id="mediaPreviewContainer" class="hidden mt-3 relative rounded-xl overflow-hidden bg-black">
                 <img id="imagePreview" class="w-full h-auto max-h-64 object-contain hidden">
                 <video id="videoPreview" class="w-full h-auto max-h-64 object-contain hidden" controls></video>
-                <button id="removeMediaBtn" class="absolute top-2 right-2 bg-gray-900/60 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 backdrop-blur-sm transition-colors"><i class="fa-solid fa-times"></i></button>
+                <button id="removeMediaBtn" class="absolute top-2 right-2 bg-gray-900/60 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600"><i class="fa-solid fa-times"></i></button>
             </div>
             
             <div id="metaPreview" class="mt-3 flex flex-wrap gap-2 text-xs font-semibold"></div>
@@ -97,8 +77,9 @@
                     <button id="locationBtn" class="hover:text-red-500 hover:scale-110 transition-transform" title="Location"><i class="fa-solid fa-location-dot"></i></button>
                     <button id="tagBtn" class="hover:text-blue-500 hover:scale-110 transition-transform" title="Tag Friends"><i class="fa-solid fa-user-tag"></i></button>
                 </div>
-                <button id="createPostBtn" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 shadow-md hover:shadow-lg">
+                <button id="createPostBtn" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 shadow-md">
                     <span id="btnText">Post</span>
+                    <i id="postSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
                 </button>
             </div>
         </div>
@@ -112,13 +93,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
             authDomain: "mysocialapp-27824.firebaseapp.com",
             projectId: "mysocialapp-27824",
-            storageBucket: "mysocialapp-27824.firebasestorage.app", // Make sure this is correct in your Firebase console
+            storageBucket: "mysocialapp-27824.firebasestorage.app",
             messagingSenderId: "774980218922",
             appId: "1:774980218922:web:24b832c42b16d42a025353"
         };
@@ -126,89 +106,63 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const storage = getStorage(app);
 
         let currentUserProfile = null;
         let isAdmin = false;
-
-        // Meta Data Storage for current post
         let postMeta = { feeling: null, location: null, tags: null, file: null, fileType: null };
 
-        // --- 1. Navbar Logic ---
+        // Navbar Scroll Logic
         let lastScrollY = window.scrollY;
         window.addEventListener("scroll", () => {
             const navbar = document.getElementById("navbar");
-            if (window.scrollY > lastScrollY && window.scrollY > 50) {
-                navbar.classList.add("hide-nav");
-            } else {
-                navbar.classList.remove("hide-nav");
-            }
+            if (window.scrollY > lastScrollY && window.scrollY > 50) navbar.classList.add("hide-nav");
+            else navbar.classList.remove("hide-nav");
             lastScrollY = window.scrollY;
         });
 
-        document.getElementById('profileBtn').addEventListener('click', () => {
-            document.getElementById('profileMenu').classList.toggle('show-dropdown');
-        });
+        document.getElementById('profileBtn').addEventListener('click', () => document.getElementById('profileMenu').classList.toggle('show-dropdown'));
 
-        // --- 2. Auth Check ---
+        // Auth Check
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "login.html"; return; }
-            
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
                 currentUserProfile = userDoc.data();
                 if (user.email === "sandusha@gmail.com") { 
                     isAdmin = true;
-                    // Mobile fix: change from hidden to inline-block
-                    const adminTab = document.getElementById('adminTab');
-                    adminTab.classList.remove('hidden');
-                    adminTab.classList.add('inline-block');
+                    document.getElementById('adminTab').classList.remove('hidden');
+                    document.getElementById('adminTab').classList.add('flex');
                 }
                 loadFeed();
             }
         });
 
-        // --- 3. UI interactions for Meta Data ---
+        // UI Helpers
         function updateMetaPreview() {
             const preview = document.getElementById('metaPreview');
             preview.innerHTML = '';
-            
-            if (postMeta.feeling) {
-                preview.innerHTML += `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md"><i class="fa-solid fa-face-smile mr-1"></i> Feeling ${postMeta.feeling}</span>`;
-            }
-            if (postMeta.location) {
-                preview.innerHTML += `<span class="bg-red-100 text-red-800 px-2 py-1 rounded-md"><i class="fa-solid fa-location-dot mr-1"></i> At ${postMeta.location}</span>`;
-            }
-            if (postMeta.tags) {
-                preview.innerHTML += `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-md"><i class="fa-solid fa-user-tag mr-1"></i> With ${postMeta.tags}</span>`;
-            }
+            if (postMeta.feeling) preview.innerHTML += `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md"><i class="fa-solid fa-face-smile mr-1"></i> Feeling ${postMeta.feeling}</span>`;
+            if (postMeta.location) preview.innerHTML += `<span class="bg-red-100 text-red-800 px-2 py-1 rounded-md"><i class="fa-solid fa-location-dot mr-1"></i> At ${postMeta.location}</span>`;
+            if (postMeta.tags) preview.innerHTML += `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-md"><i class="fa-solid fa-user-tag mr-1"></i> With ${postMeta.tags}</span>`;
         }
 
         document.getElementById('feelingBtn').addEventListener('click', async () => {
-            const { value: feeling } = await Swal.fire({ title: 'How are you feeling?', input: 'text', inputPlaceholder: 'e.g. Happy, Excited, Sad...', confirmButtonColor: '#2563eb' });
+            const { value: feeling } = await Swal.fire({ title: 'How are you feeling?', input: 'text', confirmButtonColor: '#2563eb' });
             if (feeling) { postMeta.feeling = feeling; updateMetaPreview(); }
         });
-
         document.getElementById('locationBtn').addEventListener('click', async () => {
-            const { value: loc } = await Swal.fire({ title: 'Where are you?', input: 'text', inputPlaceholder: 'e.g. Minuwangoda, Colombo...', confirmButtonColor: '#2563eb' });
+            const { value: loc } = await Swal.fire({ title: 'Where are you?', input: 'text', confirmButtonColor: '#2563eb' });
             if (loc) { postMeta.location = loc; updateMetaPreview(); }
         });
-
         document.getElementById('tagBtn').addEventListener('click', async () => {
-            const { value: tags } = await Swal.fire({ title: 'Tag Friends', input: 'text', inputPlaceholder: 'e.g. Rosee, Amaya...', confirmButtonColor: '#2563eb' });
+            const { value: tags } = await Swal.fire({ title: 'Tag Friends', input: 'text', confirmButtonColor: '#2563eb' });
             if (tags) { postMeta.tags = tags; updateMetaPreview(); }
         });
 
-        // --- 4. Media Upload Preview ---
+        // Media Preview
         document.getElementById('mediaUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-
-            // Video length / size check (Warn if > 15MB)
-            if (file.size > 15 * 1024 * 1024) {
-                Swal.fire('Warning', 'File is quite large. Uploading might take a while on mobile networks.', 'warning');
-            }
-
             postMeta.file = file;
             postMeta.fileType = file.type.startsWith('video/') ? 'video' : 'image';
 
@@ -218,73 +172,65 @@
             const vid = document.getElementById('videoPreview');
 
             container.classList.remove('hidden');
-            if (postMeta.fileType === 'video') {
-                img.classList.add('hidden');
-                vid.classList.remove('hidden');
-                vid.src = url;
-            } else {
-                vid.classList.add('hidden');
-                img.classList.remove('hidden');
-                img.src = url;
-            }
+            if (postMeta.fileType === 'video') { img.classList.add('hidden'); vid.classList.remove('hidden'); vid.src = url; } 
+            else { vid.classList.add('hidden'); img.classList.remove('hidden'); img.src = url; }
         });
 
         document.getElementById('removeMediaBtn').addEventListener('click', () => {
-            postMeta.file = null;
-            postMeta.fileType = null;
+            postMeta.file = null; postMeta.fileType = null;
             document.getElementById('mediaUpload').value = '';
             document.getElementById('mediaPreviewContainer').classList.add('hidden');
             document.getElementById('videoPreview').pause();
         });
 
-        // --- 5. Submit Post with Progress ---
+        // Create Post (With Cloudinary)
         document.getElementById('createPostBtn').addEventListener('click', async () => {
             const content = document.getElementById('postContent').value.trim();
-            if (!content && !postMeta.file) {
-                Swal.fire('Empty Post', 'Please write something or attach a photo/video.', 'info');
-                return;
-            }
+            if (!content && !postMeta.file) { Swal.fire('Empty Post', 'Please write something or attach media.', 'info'); return; }
 
             const btn = document.getElementById('createPostBtn');
             const btnText = document.getElementById('btnText');
             const spinner = document.getElementById('postSpinner');
-            
-            btn.disabled = true;
-            btnText.innerText = "Uploading...";
-            spinner.classList.remove('hidden');
+            btn.disabled = true; btnText.innerText = "Uploading..."; spinner.classList.remove('hidden');
 
             try {
                 let mediaUrl = null;
 
-                // Handle Upload if file exists
+                // Cloudinary Upload Details (මෙතැනට ඔබේ විස්තර දාන්න)
                 if (postMeta.file) {
+                    const CLOUD_NAME = "dxauvoq7v"; 
+                    const UPLOAD_PRESET = "ml_default"; 
+                    const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
+
+                    const fd = new FormData();
+                    fd.append("file", postMeta.file);
+                    fd.append("upload_preset", UPLOAD_PRESET);
+
                     const progressContainer = document.getElementById('uploadProgressContainer');
                     const progressBar = document.getElementById('uploadProgressBar');
                     progressContainer.classList.remove('hidden');
 
-                    const storageRef = ref(storage, `posts/${currentUserProfile.uid}_${Date.now()}_${postMeta.file.name}`);
-                    const uploadTask = uploadBytesResumable(storageRef, postMeta.file);
-
-                    // Await the upload completion with a promise to track progress
                     await new Promise((resolve, reject) => {
-                        uploadTask.on('state_changed', 
-                            (snapshot) => {
-                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                progressBar.style.width = progress + '%';
-                            }, 
-                            (error) => reject(error), 
-                            async () => {
-                                mediaUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', url, true);
+                        
+                        xhr.upload.onprogress = (e) => {
+                            if (e.lengthComputable) progressBar.style.width = ((e.loaded / e.total) * 100) + '%';
+                        };
+                        
+                        xhr.onload = () => {
+                            if (xhr.status === 200) {
+                                mediaUrl = JSON.parse(xhr.responseText).secure_url;
                                 resolve();
-                            }
-                        );
+                            } else reject(new Error("Cloudinary upload failed"));
+                        };
+                        xhr.onerror = () => reject(new Error("Network Error"));
+                        xhr.send(fd);
                     });
 
-                    // Hide progress bar when done
                     setTimeout(() => { progressContainer.classList.add('hidden'); progressBar.style.width = '0%'; }, 1000);
                 }
 
-                // Save to Firestore
                 await addDoc(collection(db, "posts"), {
                     authorId: currentUserProfile.uid,
                     authorName: currentUserProfile.name,
@@ -295,14 +241,10 @@
                     location: postMeta.location,
                     tags: postMeta.tags,
                     createdAt: serverTimestamp(),
-                    editHistory: [],
-                    isArchived: false,
-                    isPinned: false
+                    editHistory: [], isArchived: false, isPinned: false
                 });
 
-                // Reset UI
-                document.getElementById('postContent').value = "";
-                document.getElementById('removeMediaBtn').click(); // clears file
+                document.getElementById('postContent').value = ""; document.getElementById('removeMediaBtn').click();
                 postMeta = { feeling: null, location: null, tags: null, file: null, fileType: null };
                 updateMetaPreview();
 
@@ -310,24 +252,20 @@
                 Swal.fire('Error', 'Failed to post: ' + error.message, 'error');
                 document.getElementById('uploadProgressContainer').classList.add('hidden');
             } finally {
-                btn.disabled = false;
-                btnText.innerText = "Post";
-                spinner.classList.add('hidden');
+                btn.disabled = false; btnText.innerText = "Post"; spinner.classList.add('hidden');
             }
         });
 
-        // --- 6. Render Feed ---
+        // Load Feed
         function loadFeed() {
             const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-            
             onSnapshot(q, (snapshot) => {
                 const feedContainer = document.getElementById('feedContainer');
                 feedContainer.innerHTML = '';
                 
                 let posts = [];
                 snapshot.forEach((doc) => {
-                    let p = doc.data();
-                    p.id = doc.id;
+                    let p = doc.data(); p.id = doc.id;
                     if (!p.isArchived) posts.push(p);
                 });
 
@@ -340,63 +278,44 @@
 
                 posts.forEach(post => {
                     const isOwner = post.authorId === currentUserProfile.uid;
-                    const dateObj = post.createdAt ? post.createdAt.toDate() : new Date();
-                    const timeString = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const timeString = post.createdAt ? post.createdAt.toDate().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
                     
-                    // Meta text generation
                     let metaText = '';
                     if (post.feeling) metaText += ` is feeling <b>${post.feeling}</b>`;
                     if (post.tags) metaText += ` with <b>${post.tags}</b>`;
                     if (post.location) metaText += ` at <b>${post.location}</b>`;
 
-                    // Media generation
                     let mediaHtml = '';
                     if (post.mediaUrl) {
-                        if (post.mediaType === 'video') {
-                            mediaHtml = `<video src="${post.mediaUrl}" controls class="w-full h-auto max-h-96 object-cover mt-3 bg-black"></video>`;
-                        } else {
-                            mediaHtml = `<img src="${post.mediaUrl}" alt="Post image" class="w-full h-auto max-h-96 object-cover mt-3 bg-gray-100">`;
-                        }
+                        if (post.mediaType === 'video') mediaHtml = `<video src="${post.mediaUrl}" controls class="w-full h-auto max-h-96 object-cover mt-3 bg-black"></video>`;
+                        else mediaHtml = `<img src="${post.mediaUrl}" class="w-full h-auto max-h-96 object-cover mt-3 bg-gray-100">`;
                     }
 
                     const postEl = document.createElement('div');
-                    // Add animation class `post-enter`
                     postEl.className = `post-enter bg-white rounded-xl shadow-sm border overflow-hidden ${post.isPinned ? 'border-blue-300 bg-blue-50/20' : 'border-gray-200'}`;
                     
                     postEl.innerHTML = `
                         <div class="p-4">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center font-bold text-blue-800 shadow-inner">
-                                        ${post.authorName.charAt(0)}
-                                    </div>
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center font-bold text-blue-800 shadow-inner">${post.authorName.charAt(0)}</div>
                                     <div>
-                                        <h3 class="font-bold text-gray-800 text-sm">
-                                            ${post.authorName} <span class="font-normal text-gray-500">${metaText}</span>
-                                            ${post.isPinned ? '<span class="ml-1 text-[10px] text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full uppercase tracking-wider"><i class="fa-solid fa-thumbtack"></i> Pinned</span>' : ''}
-                                        </h3>
+                                        <h3 class="font-bold text-gray-800 text-sm">${post.authorName} <span class="font-normal text-gray-500">${metaText}</span>${post.isPinned ? '<span class="ml-1 text-[10px] text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full uppercase tracking-wider"><i class="fa-solid fa-thumbtack"></i> Pinned</span>' : ''}</h3>
                                         <p class="text-xs text-gray-500 mt-0.5">${timeString} <i class="fa-solid fa-earth-americas ml-1 text-[10px]"></i></p>
                                     </div>
                                 </div>
-                                
                                 ${(isOwner || isAdmin) ? `
                                 <div class="relative">
                                     <button onclick="document.getElementById('menu-${post.id}').classList.toggle('hidden')" class="text-gray-400 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition"><i class="fa-solid fa-ellipsis"></i></button>
                                     <div id="menu-${post.id}" class="hidden absolute right-0 mt-1 w-36 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-10">
                                         ${isAdmin ? `<button onclick="window.togglePin('${post.id}', ${post.isPinned})" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i class="fa-solid fa-thumbtack mr-2 text-gray-400"></i> ${post.isPinned ? 'Unpin' : 'Pin Post'}</button>` : ''}
-                                        ${isOwner ? `
-                                        <button onclick="window.archivePost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i class="fa-solid fa-box-archive mr-2 text-gray-400"></i> Archive</button>
-                                        <hr class="my-1 border-gray-100">
-                                        <button onclick="window.deletePost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fa-solid fa-trash mr-2"></i> Delete</button>` : ''}
+                                        ${isOwner ? `<button onclick="window.archivePost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i class="fa-solid fa-box-archive mr-2 text-gray-400"></i> Archive</button><hr class="my-1 border-gray-100"><button onclick="window.deletePost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fa-solid fa-trash mr-2"></i> Delete</button>` : ''}
                                     </div>
                                 </div>` : ''}
                             </div>
-
                             ${post.content ? `<div class="text-gray-800 text-sm whitespace-pre-wrap mt-2">${escapeHtml(post.content)}</div>` : ''}
                         </div>
-                        
                         ${mediaHtml}
-
                         <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/50 flex gap-6 text-gray-500 font-bold text-sm">
                             <button class="hover:text-blue-600 transition flex items-center gap-1.5"><i class="fa-regular fa-thumbs-up text-lg"></i> Like</button>
                             <button class="hover:text-blue-600 transition flex items-center gap-1.5"><i class="fa-regular fa-comment text-lg"></i> Comment</button>
@@ -407,26 +326,11 @@
             });
         }
 
-        // Global functions
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.innerText = text;
-            return div.innerHTML;
-        }
-
-        window.archivePost = async function(postId) {
-            if(confirm("Archive this post?")) await updateDoc(doc(db, "posts", postId), { isArchived: true });
-        };
-        window.deletePost = async function(postId) {
-            if(confirm("Permanently delete?")) await deleteDoc(doc(db, "posts", postId));
-        };
-        window.togglePin = async function(postId, currentStatus) {
-            await updateDoc(doc(db, "posts", postId), { isPinned: !currentStatus });
-        };
-
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            signOut(auth).then(() => { window.location.href = "login.html"; });
-        });
+        function escapeHtml(text) { const div = document.createElement('div'); div.innerText = text; return div.innerHTML; }
+        window.archivePost = async function(postId) { if(confirm("Archive this post?")) await updateDoc(doc(db, "posts", postId), { isArchived: true }); };
+        window.deletePost = async function(postId) { if(confirm("Permanently delete?")) await deleteDoc(doc(db, "posts", postId)); };
+        window.togglePin = async function(postId, currentStatus) { await updateDoc(doc(db, "posts", postId), { isPinned: !currentStatus }); };
+        document.getElementById('logoutBtn').addEventListener('click', () => { signOut(auth).then(() => { window.location.href = "login.html"; }); });
     </script>
 </body>
 </html>
