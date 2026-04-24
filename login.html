@@ -15,12 +15,7 @@
         }
         .password-container { position: relative; }
         .eye-icon {
-            position: absolute;
-            right: 12px;
-            top: 38px;
-            cursor: pointer;
-            color: #6b7280;
-            transition: color 0.3s;
+            position: absolute; right: 12px; top: 38px; cursor: pointer; color: #6b7280; transition: color 0.3s;
         }
         .eye-icon:hover { color: #2563eb; }
     </style>
@@ -28,14 +23,13 @@
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
 
     <div class="fade-in mb-6 text-center">
-        <img src="mainlogo.png" alt="Logo" class="w-24 h-24 mx-auto mb-2 object-contain drop-shadow-md">
+        <img src="logo.png" alt="Logo" class="h-20 mx-auto mb-2 object-contain drop-shadow-md">
         <h1 class="text-2xl font-bold text-gray-800">Welcome Back</h1>
         <p class="text-gray-500 text-sm mt-1">Login to your account</p>
     </div>
 
     <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md fade-in border border-gray-100">
         <form id="loginForm" class="space-y-5">
-            
             <div>
                 <label class="block text-sm font-medium text-gray-700">Email Address</label>
                 <input type="email" id="email" autocomplete="email" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all">
@@ -44,36 +38,23 @@
             <div class="password-container">
                 <label class="block text-sm font-medium text-gray-700">Password</label>
                 <input type="password" id="password" autocomplete="current-password" required class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none pr-10 transition-all">
-                
                 <svg onclick="togglePassword('password')" class="eye-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                 </svg>
             </div>
 
-            <div class="flex justify-end">
-                <a href="#" id="forgotPasswordBtn" class="text-sm text-blue-600 hover:underline font-medium">Forgot Password?</a>
-            </div>
-
-            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 hover:shadow-lg transition-all duration-300 flex justify-center items-center gap-2">
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 flex justify-center items-center gap-2">
                 <span>Login</span>
-                <svg id="spinner" class="w-5 h-5 animate-spin text-white hidden" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <svg id="spinner" class="w-5 h-5 animate-spin text-white hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
             </button>
         </form>
-
-        <p class="mt-6 text-center text-gray-600 text-sm">
-            Don't have an account? <a href="register.html" class="text-blue-600 font-bold hover:underline">Sign up here</a>
-        </p>
     </div>
 
     <script>
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
-            if (input.type === "password") {
-                input.type = "text";
-            } else {
-                input.type = "password";
-            }
+            input.type = input.type === "password" ? "text" : "password";
         }
     </script>
 
@@ -82,7 +63,6 @@
         import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ඔබේ Firebase Config එක මෙතනට දාන්න
         const firebaseConfig = {
             apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
             authDomain: "mysocialapp-27824.firebaseapp.com",
@@ -104,60 +84,40 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            submitBtn.disabled = true;
-            spinner.classList.remove('hidden');
+            submitBtn.disabled = true; spinner.classList.remove('hidden');
 
             try {
-                // 1. User ලොග් කිරීම
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
-
-                // 2. Firestore එකෙන් User ගේ Status එක (Active ද Pending ද) බැලීම
                 const userDoc = await getDoc(doc(db, "users", user.uid));
 
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     
                     if (userData.status === "active") {
-                        // Status එක Active නම් index.html (News Feed) එකට යවනවා
+                        window.location.href = "index.html"; 
+                    } else if (userData.status === "blocked") {
+                        await signOut(auth);
                         Swal.fire({
-                            icon: 'success',
-                            title: 'Welcome Back!',
-                            text: 'Logging you in...',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            window.location.href = "index.html"; 
+                            icon: 'error',
+                            title: 'Account Blocked',
+                            text: 'Your account has been temporarily blocked by the admin.',
+                            confirmButtonColor: '#d33'
                         });
                     } else {
-                        // Status එක Pending නම්, ලොග් වෙන්න නොදී ආයෙත් Sign Out කරනවා
                         await signOut(auth);
                         Swal.fire({
                             icon: 'warning',
                             title: 'Account Pending',
                             text: 'Your account is still waiting for Admin approval.',
-                            confirmButtonColor: '#f59e0b' // Yellow color
+                            confirmButtonColor: '#f59e0b'
                         });
                     }
-                } else {
-                    await signOut(auth);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'User profile not found in database.',
-                    });
                 }
-
             } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Login Failed',
-                    text: 'Incorrect Email or Password!', // User friendly message
-                    confirmButtonColor: '#2563eb'
-                });
+                Swal.fire({ icon: 'error', title: 'Login Failed', text: 'Incorrect Email or Password!' });
             } finally {
-                submitBtn.disabled = false;
-                spinner.classList.add('hidden');
+                submitBtn.disabled = false; spinner.classList.add('hidden');
             }
         });
     </script>
