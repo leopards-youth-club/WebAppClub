@@ -19,29 +19,27 @@
     </div>
 
     <div id="mainContent" class="hidden-content max-w-6xl mx-auto">
-        
         <div class="bg-white rounded-xl shadow-sm p-6 mb-6 flex justify-between items-center border border-gray-100">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">Admin Panel</h1>
                 <p class="text-sm text-gray-500 mt-1">Manage users and requests</p>
             </div>
-            <button id="logoutBtn" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-100 transition-colors">
-                Logout
-            </button>
+            <div>
+                <a href="index.html" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 mr-2">Go to Feed</a>
+                <button id="logoutBtn" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-100">Logout</button>
+            </div>
         </div>
 
         <div class="flex space-x-6 border-b border-gray-200 mb-6 px-2">
             <button id="tabPending" class="pb-3 text-sm font-bold active-tab transition-all">Pending Requests</button>
-            <button id="tabActive" class="pb-3 text-sm font-bold text-gray-500 hover:text-blue-600 transition-all">Active Members</button>
+            <button id="tabActive" class="pb-3 text-sm font-bold text-gray-500 hover:text-blue-600 transition-all">Members</button>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
-                    <thead id="tableHead">
-                        </thead>
-                    <tbody id="usersTableBody" class="text-sm">
-                        </tbody>
+                    <thead id="tableHead"></thead>
+                    <tbody id="usersTableBody" class="text-sm"></tbody>
                 </table>
             </div>
         </div>
@@ -64,11 +62,9 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-hVdbAFDaev1Z937mjr6YgAv1JjFVWV-Ut-IcHzm7qgzMHMsWg1fUMhCNWpeFJ2dN/exec";
         let currentTab = "pending";
 
-        // 1. Security & Tab Switch Logic
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "login.html"; return; }
             try {
@@ -83,18 +79,13 @@
                     document.getElementById('mainContent').classList.remove('hidden-content');
                     renderTable();
                 } else {
-                    Swal.fire('Access Denied', 'Not an admin.', 'error').then(() => window.location.href = "index.html");
+                    window.location.href = "index.html";
                 }
             } catch (error) { window.location.href = "login.html"; }
         });
 
-        // Tab Switching
-        document.getElementById('tabPending').addEventListener('click', () => {
-            switchTab("pending");
-        });
-        document.getElementById('tabActive').addEventListener('click', () => {
-            switchTab("active");
-        });
+        document.getElementById('tabPending').addEventListener('click', () => switchTab("pending"));
+        document.getElementById('tabActive').addEventListener('click', () => switchTab("active"));
 
         function switchTab(tab) {
             currentTab = tab;
@@ -103,23 +94,16 @@
             renderTable();
         }
 
-        // 2. Render Table Logic
         async function renderTable() {
             const tableHead = document.getElementById('tableHead');
             const tableBody = document.getElementById('usersTableBody');
-            tableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500 animate-pulse">Loading data...</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500 animate-pulse">Loading data...</td></tr>`;
 
             if (currentTab === "pending") {
-                tableHead.innerHTML = `
-                    <tr class="bg-gray-50 text-gray-700 text-sm border-b">
-                        <th class="p-4">Name</th><th class="p-4">Email</th><th class="p-4">City</th><th class="p-4 text-center">Action</th>
-                    </tr>`;
+                tableHead.innerHTML = `<tr class="bg-gray-50 text-gray-700 border-b"><th class="p-4">Name</th><th class="p-4">Email</th><th class="p-4">City</th><th class="p-4 text-center">Action</th></tr>`;
                 loadUsers(["pending"]);
             } else {
-                tableHead.innerHTML = `
-                    <tr class="bg-gray-50 text-gray-700 text-sm border-b">
-                        <th class="p-4">Name</th><th class="p-4">Status</th><th class="p-4">City</th><th class="p-4 text-center">Manage</th>
-                    </tr>`;
+                tableHead.innerHTML = `<tr class="bg-gray-50 text-gray-700 border-b"><th class="p-4">Name</th><th class="p-4">Status</th><th class="p-4">City</th><th class="p-4 text-center">Manage</th></tr>`;
                 loadUsers(["active", "blocked"]);
             }
         }
@@ -131,80 +115,50 @@
                 const querySnapshot = await getDocs(q);
                 tableBody.innerHTML = '';
 
-                if (querySnapshot.empty) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-400">No users found.</td></tr>`;
-                    return;
-                }
-
                 querySnapshot.forEach((docSnap) => {
                     const user = docSnap.data();
+                    
+                    // Hide current admin from the list
+                    if (auth.currentUser && user.email === auth.currentUser.email) return;
+
                     const row = document.createElement('tr');
                     row.className = "border-b hover:bg-gray-50 transition-all";
 
                     if (currentTab === "pending") {
                         row.innerHTML = `
-                            <td class="p-4 font-medium">${user.name}</td>
-                            <td class="p-4 text-gray-600">${user.email}</td>
-                            <td class="p-4 text-gray-600">${user.city}</td>
+                            <td class="p-4 font-medium">${user.name}</td><td class="p-4">${user.email}</td><td class="p-4">${user.city}</td>
                             <td class="p-4 text-center space-x-2">
                                 <button onclick="window.approveUser('${user.uid}', '${user.name}')" class="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:shadow-md">Approve</button>
                                 <button onclick="window.rejectUser('${user.uid}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:shadow-md">Reject</button>
                             </td>`;
                     } else {
                         const statusBadge = user.status === 'active' ? '<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Active</span>' : '<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Blocked</span>';
-                        const actionBtn = user.status === 'active' ? `<button onclick="window.updateStatus('${user.uid}', 'blocked')" class="bg-orange-100 text-orange-600 px-3 py-1 rounded text-xs font-bold hover:bg-orange-200">Block</button>` : `<button onclick="window.updateStatus('${user.uid}', 'active')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded text-xs font-bold hover:bg-blue-200">Activate</button>`;
+                        const actionBtn = user.status === 'active' ? `<button onclick="window.updateStatus('${user.uid}', 'blocked')" class="bg-orange-100 text-orange-600 px-3 py-1 rounded text-xs font-bold">Block User</button>` : `<button onclick="window.updateStatus('${user.uid}', 'active')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded text-xs font-bold">Activate User</button>`;
                         
-                        row.innerHTML = `
-                            <td class="p-4 font-medium">${user.name}</td>
-                            <td class="p-4">${statusBadge}</td>
-                            <td class="p-4 text-gray-600">${user.city}</td>
-                            <td class="p-4 text-center space-x-2">
-                                ${actionBtn}
-                                <button onclick="window.updateStatus('${user.uid}', 'deactivated')" class="text-red-500 hover:underline text-xs font-bold ml-2">Remove</button>
-                            </td>`;
+                        row.innerHTML = `<td class="p-4 font-medium">${user.name}</td><td class="p-4">${statusBadge}</td><td class="p-4">${user.city}</td><td class="p-4 text-center">${actionBtn}</td>`;
                     }
                     tableBody.appendChild(row);
                 });
             } catch (e) { tableBody.innerHTML = `<tr><td class="p-4 text-red-500">Error: ${e.message}</td></tr>`; }
         }
 
-        // 3. User Actions
         window.approveUser = async function(uid, userName) {
             Swal.fire({ title: 'Approving...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
                 await updateDoc(doc(db, "users", uid), { status: "active" });
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: "createSheet", userName: userName }),
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-                });
-                Swal.fire('Approved!', 'Account activated and sheet created.', 'success');
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "createSheet", userName: userName }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+                Swal.fire('Approved!', 'Account activated.', 'success');
                 renderTable();
             } catch (e) { Swal.fire('Error', e.message, 'error'); }
         };
 
         window.updateStatus = async function(uid, newStatus) {
-            const confirmMsg = newStatus === 'deactivated' ? "Remove this user permanently?" : `Change status to ${newStatus}?`;
-            const result = await Swal.fire({
-                title: 'Are you sure?',
-                text: confirmMsg,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#2563eb',
-                confirmButtonText: 'Yes, Proceed'
-            });
-
+            const confirmMsg = newStatus === 'blocked' ? "Block this user?" : "Activate this user?";
+            const result = await Swal.fire({ title: 'Are you sure?', text: confirmMsg, icon: 'warning', showCancelButton: true, confirmButtonColor: '#2563eb' });
             if (result.isConfirmed) {
-                try {
-                    if (newStatus === 'deactivated') {
-                        await deleteDoc(doc(db, "users", uid));
-                        Swal.fire('Deleted', 'User removed.', 'success');
-                    } else {
-                        await updateDoc(doc(db, "users", uid), { status: newStatus });
-                        Swal.fire('Updated', `User is now ${newStatus}.`, 'success');
-                    }
-                    renderTable();
-                } catch (e) { Swal.fire('Error', e.message, 'error'); }
+                await updateDoc(doc(db, "users", uid), { status: newStatus });
+                Swal.fire('Updated', `User is now ${newStatus}.`, 'success');
+                renderTable();
             }
         };
 
@@ -215,9 +169,7 @@
             }
         };
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            signOut(auth).then(() => window.location.href = "login.html");
-        });
+        document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth).then(() => window.location.href = "login.html"));
     </script>
 </body>
 </html>
