@@ -10,13 +10,18 @@
     
     <style>
         body { padding-top: 130px; background-color: #f3f4f6; }
-        #navbar { transition: transform 0.3s ease-in-out; }
-        .hide-nav { transform: translateY(-100%); }
+        /* Only bottom nav hides now */
+        #bottomNav { transition: transform 0.3s ease-in-out; }
+        .hide-nav { transform: translateY(-100%); opacity: 0; pointer-events: none; }
         .nav-scroller::-webkit-scrollbar { display: none; }
         .dropdown-content { display: none; }
         .show-dropdown { display: block; }
         .post-enter { animation: slideUpFade 0.5s ease-out forwards; opacity: 0; transform: translateY(20px); }
         @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
+        /* Reactions Hover effect */
+        .reaction-box { display: none; }
+        .reaction-btn-group:hover .reaction-box { display: flex; animation: slideUp 0.2s ease-out forwards;}
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .progress-bar-stripes {
             background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
             background-size: 1rem 1rem; animation: progress-stripes 1s linear infinite;
@@ -30,23 +35,28 @@
         <div id="uploadProgressBar" class="h-full bg-blue-600 w-0 transition-all duration-300 progress-bar-stripes"></div>
     </div>
 
-    <header id="navbar" class="fixed w-full top-0 z-50 shadow-md bg-white">
-        <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
-            <img src="logo.png" alt="Logo" class="h-10 object-contain">
-            <div class="relative">
-                <div id="profileBtn" class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold cursor-pointer shadow-md hover:scale-105 transition-transform">
-                    <i class="fa-solid fa-user"></i>
-                </div>
-                <div id="profileMenu" class="dropdown-content absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 origin-top-right transition-all">
-                    <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-blue-600"><i class="fa-solid fa-circle-user mr-2"></i> My Profile</a>
-                    <hr class="my-1 border-gray-100">
-                    <button id="logoutBtn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"><i class="fa-solid fa-right-from-bracket mr-2"></i> Logout</button>
+    <header class="fixed w-full top-0 z-50 shadow-sm flex flex-col">
+        <div class="flex justify-between items-center px-4 py-3 bg-white z-50 border-b border-gray-100">
+            <img src="logo.png" alt="Logo" class="h-10 object-contain cursor-pointer" onclick="loadFeed()">
+            <div class="flex items-center gap-4">
+                <a href="members.html?search=true" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition text-lg" title="Search Members">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </a>
+                <div class="relative">
+                    <div id="profileBtn" class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold cursor-pointer shadow-md hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div id="profileMenu" class="dropdown-content absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 origin-top-right transition-all">
+                        <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-blue-600"><i class="fa-solid fa-circle-user mr-2"></i> My Profile</a>
+                        <hr class="my-1 border-gray-100">
+                        <button id="logoutBtn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"><i class="fa-solid fa-right-from-bracket mr-2"></i> Logout</button>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <nav class="flex justify-around items-center bg-white px-2 py-1">
-            <a href="index.html" class="flex-1 flex justify-center py-3 text-blue-600 text-2xl border-b-2 border-blue-600" title="Feed"><i class="fa-solid fa-house"></i></a>
+        <nav id="bottomNav" class="flex justify-around items-center bg-white px-2 py-1 shadow-md absolute w-full top-full -z-10">
+            <button onclick="loadFeed()" class="flex-1 flex justify-center py-3 text-blue-600 text-2xl border-b-2 border-blue-600" title="Refresh Feed"><i class="fa-solid fa-house"></i></button>
             <a href="requests.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Requests"><i class="fa-solid fa-user-plus"></i></a>
             <a href="members.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Members"><i class="fa-solid fa-users"></i></a>
             <a href="notifications.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Notifications"><i class="fa-solid fa-bell"></i></a>
@@ -54,45 +64,63 @@
         </nav>
     </header>
 
-    <main class="max-w-2xl mx-auto px-4 pb-10">
+    <main class="max-w-2xl mx-auto px-4 pb-10 mt-6">
+        
         <div class="bg-white rounded-xl shadow-md p-4 mb-6 border border-gray-100 transform transition-all hover:shadow-lg">
-            <div class="flex gap-3">
-                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0"><i class="fa-solid fa-user"></i></div>
-                <textarea id="postContent" class="w-full bg-gray-50 hover:bg-gray-100 focus:bg-white rounded-xl p-3 outline-none resize-none transition-colors border border-transparent focus:border-blue-300" rows="3" placeholder="What's on your mind?"></textarea>
-            </div>
-
-            <div id="mediaPreviewContainer" class="hidden mt-3 relative rounded-xl overflow-hidden bg-black">
-                <img id="imagePreview" class="w-full h-auto max-h-64 object-contain hidden">
-                <video id="videoPreview" class="w-full h-auto max-h-64 object-contain hidden" controls></video>
-                <button id="removeMediaBtn" class="absolute top-2 right-2 bg-gray-900/60 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600"><i class="fa-solid fa-times"></i></button>
-            </div>
             
-            <div id="metaPreview" class="mt-3 flex flex-wrap gap-2 text-xs font-semibold"></div>
-
-            <div class="flex justify-between items-center mt-3 border-t border-gray-100 pt-3">
-                <div class="flex gap-4 text-gray-500 text-xl pl-2">
-                    <input type="file" id="mediaUpload" accept="image/*,video/*" class="hidden">
-                    <button onclick="document.getElementById('mediaUpload').click()" class="hover:text-green-500 hover:scale-110 transition-transform" title="Photo/Video"><i class="fa-solid fa-images"></i></button>
-                    <button id="feelingBtn" class="hover:text-yellow-500 hover:scale-110 transition-transform" title="Feeling"><i class="fa-solid fa-face-smile-beam"></i></button>
-                    <button id="locationBtn" class="hover:text-red-500 hover:scale-110 transition-transform" title="Location"><i class="fa-solid fa-location-dot"></i></button>
-                    <button id="tagBtn" class="hover:text-blue-500 hover:scale-110 transition-transform" title="Tag Friends"><i class="fa-solid fa-user-tag"></i></button>
+            <div id="postInputSection">
+                <div class="flex gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0"><i class="fa-solid fa-user"></i></div>
+                    <textarea id="postContent" class="w-full bg-gray-50 hover:bg-gray-100 focus:bg-white rounded-xl p-3 outline-none resize-none transition-colors border border-transparent focus:border-blue-300" rows="3" placeholder="What's on your mind?"></textarea>
                 </div>
-                <button id="createPostBtn" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 shadow-md">
-                    <span id="btnText">Post</span>
-                    <i id="postSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
-                </button>
+
+                <div id="mediaPreviewContainer" class="hidden mt-3 relative rounded-xl overflow-hidden bg-black">
+                    <img id="imagePreview" class="w-full h-auto max-h-64 object-contain hidden">
+                    <video id="videoPreview" class="w-full h-auto max-h-64 object-contain hidden" controls></video>
+                    <button id="removeMediaBtn" class="absolute top-2 right-2 bg-gray-900/60 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600"><i class="fa-solid fa-times"></i></button>
+                </div>
+                
+                <div id="metaPreview" class="mt-3 flex flex-wrap gap-2 text-xs font-semibold"></div>
+
+                <div class="flex justify-between items-center mt-3 border-t border-gray-100 pt-3">
+                    <div class="flex gap-4 text-gray-500 text-xl pl-2">
+                        <input type="file" id="mediaUpload" accept="image/*,video/*" class="hidden">
+                        <button onclick="document.getElementById('mediaUpload').click()" class="hover:text-green-500 hover:scale-110 transition-transform" title="Photo/Video"><i class="fa-solid fa-images"></i></button>
+                        <button id="feelingBtn" class="hover:text-yellow-500 hover:scale-110 transition-transform" title="Feeling"><i class="fa-solid fa-face-smile-beam"></i></button>
+                        <button id="locationBtn" class="hover:text-red-500 hover:scale-110 transition-transform" title="Location"><i class="fa-solid fa-location-dot"></i></button>
+                        <button id="tagBtn" class="hover:text-blue-500 hover:scale-110 transition-transform" title="Tag Friends"><i class="fa-solid fa-user-tag"></i></button>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <select id="privacySelect" class="bg-gray-100 text-gray-700 text-xs font-bold py-1.5 px-2 rounded-lg outline-none cursor-pointer hover:bg-gray-200">
+                            <option value="public">&#xf0ac; Public</option>
+                            <option value="friends">&#xf0c0; Friends</option>
+                            <option value="onlyMe">&#xf023; Only Me</option>
+                        </select>
+                        <button id="createPostBtn" class="bg-blue-600 text-white px-5 py-2 rounded-full font-bold hover:bg-blue-700 active:scale-95 transition-all shadow-md">Post</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="uploadingState" class="hidden text-center py-6">
+                <i class="fa-solid fa-spinner fa-spin text-4xl text-blue-600"></i>
+                <p class="mt-3 font-bold text-gray-600">Uploading your post...</p>
             </div>
         </div>
 
         <div id="feedContainer" class="space-y-6">
             <div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3 font-medium">Loading Feed...</p></div>
         </div>
+        
+        <div class="text-center mt-6 mb-10">
+            <button onclick="loadFeed()" class="bg-white border border-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition"><i class="fa-solid fa-rotate-right mr-2"></i>Load New Posts</button>
+        </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
@@ -111,16 +139,19 @@
         let isAdmin = false;
         let postMeta = { feeling: null, location: null, tags: null, file: null, fileType: null };
 
-        // Navbar Scroll Logic
+        // Navbar Scroll Logic (Only bottom nav hides)
         let lastScrollY = window.scrollY;
         window.addEventListener("scroll", () => {
-            const navbar = document.getElementById("navbar");
-            if (window.scrollY > lastScrollY && window.scrollY > 50) navbar.classList.add("hide-nav");
-            else navbar.classList.remove("hide-nav");
+            const bottomNav = document.getElementById("bottomNav");
+            if (window.scrollY > lastScrollY && window.scrollY > 50) bottomNav.classList.add("hide-nav");
+            else bottomNav.classList.remove("hide-nav");
             lastScrollY = window.scrollY;
         });
 
         document.getElementById('profileBtn').addEventListener('click', () => document.getElementById('profileMenu').classList.toggle('show-dropdown'));
+
+        // Apply FontAwesome to Select Options
+        document.getElementById('privacySelect').style.fontFamily = "'Inter', 'Font Awesome 6 Free'";
 
         // Auth Check
         onAuthStateChanged(auth, async (user) => {
@@ -133,9 +164,35 @@
                     document.getElementById('adminTab').classList.remove('hidden');
                     document.getElementById('adminTab').classList.add('flex');
                 }
-                loadFeed();
+                loadFeed(); // Initial load
             }
         });
+
+        // Image Compressor
+        async function compressImage(file) {
+            if (!file.type.startsWith('image/')) return file;
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width; let height = img.height;
+                        const MAX_WIDTH = 1280;
+                        if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob((blob) => {
+                            if (!blob) return resolve(file);
+                            resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+                        }, 'image/jpeg', 0.75); 
+                    };
+                };
+            });
+        }
 
         // UI Helpers
         function updateMetaPreview() {
@@ -155,179 +212,114 @@
             if (loc) { postMeta.location = loc; updateMetaPreview(); }
         });
         document.getElementById('tagBtn').addEventListener('click', async () => {
-            const { value: tags } = await Swal.fire({ title: 'Tag Friends', input: 'text', confirmButtonColor: '#2563eb' });
+            const { value: tags } = await Swal.fire({ title: 'Tag Friends', text: 'Type names (Friend list system coming soon!)', input: 'text', confirmButtonColor: '#2563eb' });
             if (tags) { postMeta.tags = tags; updateMetaPreview(); }
         });
-
-        // --- අලුතින් එකතු කළ Image Compressor එක ---
-        async function compressImage(file) {
-            // පින්තූරයක් නෙවෙයි නම් (උදා: වීඩියෝ එකක් නම්) ඒක ඒ විදියටම යවනවා
-            if (!file.type.startsWith('image/')) return file;
-
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-
-                        // උපරිම පළල 1280px වලට සීමා කිරීම (Facebook වලත් මේක පාවිච්චි වෙනවා)
-                        const MAX_WIDTH = 1280;
-                        if (width > MAX_WIDTH) {
-                            height = Math.round((height * MAX_WIDTH) / width);
-                            width = MAX_WIDTH;
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        // Quality එක 75% කට අඩු කරලා අලුත් ෆයිල් එකක් හදනවා
-                        canvas.toBlob((blob) => {
-                            if (!blob) return resolve(file);
-                            const compressedFile = new File([blob], file.name, {
-                                type: 'image/jpeg',
-                                lastModified: Date.now()
-                            });
-                            resolve(compressedFile);
-                        }, 'image/jpeg', 0.75); 
-                    };
-                };
-            });
-        }
 
         // Media Preview
         document.getElementById('mediaUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            postMeta.file = file;
-            postMeta.fileType = file.type.startsWith('video/') ? 'video' : 'image';
-
+            postMeta.file = file; postMeta.fileType = file.type.startsWith('video/') ? 'video' : 'image';
             const url = URL.createObjectURL(file);
             const container = document.getElementById('mediaPreviewContainer');
-            const img = document.getElementById('imagePreview');
-            const vid = document.getElementById('videoPreview');
-
+            const img = document.getElementById('imagePreview'); const vid = document.getElementById('videoPreview');
             container.classList.remove('hidden');
             if (postMeta.fileType === 'video') { img.classList.add('hidden'); vid.classList.remove('hidden'); vid.src = url; } 
             else { vid.classList.add('hidden'); img.classList.remove('hidden'); img.src = url; }
         });
 
         document.getElementById('removeMediaBtn').addEventListener('click', () => {
-            postMeta.file = null; postMeta.fileType = null;
-            document.getElementById('mediaUpload').value = '';
-            document.getElementById('mediaPreviewContainer').classList.add('hidden');
-            document.getElementById('videoPreview').pause();
+            postMeta.file = null; postMeta.fileType = null; document.getElementById('mediaUpload').value = '';
+            document.getElementById('mediaPreviewContainer').classList.add('hidden'); document.getElementById('videoPreview').pause();
         });
 
-        // Create Post (With Cloudinary)
+        // Create Post 
         document.getElementById('createPostBtn').addEventListener('click', async () => {
             const content = document.getElementById('postContent').value.trim();
+            const privacy = document.getElementById('privacySelect').value;
+
             if (!content && !postMeta.file) { Swal.fire('Empty Post', 'Please write something or attach media.', 'info'); return; }
 
-            const btn = document.getElementById('createPostBtn');
-            const btnText = document.getElementById('btnText');
-            const spinner = document.getElementById('postSpinner');
-            btn.disabled = true; btnText.innerText = "Uploading..."; spinner.classList.remove('hidden');
+            // UI Changes during upload
+            document.getElementById('postInputSection').classList.add('hidden');
+            document.getElementById('uploadingState').classList.remove('hidden');
 
             try {
                 let mediaUrl = null;
 
                 if (postMeta.file) {
-                    // 🛑 මෙතැනට ඔයාගේ විස්තර දාන්න 🛑
+                    // 🛑 මෙතැනට ඔයාගේ Cloudinary විස්තර දාන්න 🛑
                     const CLOUD_NAME = "dt2y6gent"; 
                     const UPLOAD_PRESET = "ml_default"; 
                     const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 
-                    // ෆයිල් එක අප්ලෝඩ් කරන්න කලින් Compress කරනවා
                     let fileToUpload = await compressImage(postMeta.file);
-
                     const fd = new FormData();
-                    fd.append("file", fileToUpload);
-                    fd.append("upload_preset", UPLOAD_PRESET);
+                    fd.append("file", fileToUpload); fd.append("upload_preset", UPLOAD_PRESET);
 
                     const progressContainer = document.getElementById('uploadProgressContainer');
                     const progressBar = document.getElementById('uploadProgressBar');
                     progressContainer.classList.remove('hidden');
 
                     await new Promise((resolve, reject) => {
-                        const xhr = new XMLHttpRequest();
-                        xhr.open('POST', url, true);
-                        
-                        xhr.upload.onprogress = (e) => {
-                            if (e.lengthComputable) {
-                                let percent = (e.loaded / e.total) * 100;
-                                progressBar.style.width = percent + '%';
-                            }
-                        };
-                        
-                        xhr.onload = () => {
-                            if (xhr.status === 200) {
-                                mediaUrl = JSON.parse(xhr.responseText).secure_url;
-                                resolve();
-                            } else {
-                                // Error එක console එකේ පෙන්වීම
-                                console.log("Cloudinary Error Response:", xhr.responseText);
-                                let errorMsg = "Cloudinary Error.";
-                                try {
-                                    let errObj = JSON.parse(xhr.responseText);
-                                    if(errObj.error && errObj.error.message) errorMsg = errObj.error.message;
-                                } catch(e) {}
-                                reject(new Error(errorMsg));
-                            }
-                        };
+                        const xhr = new XMLHttpRequest(); xhr.open('POST', url, true);
+                        xhr.upload.onprogress = (e) => { if (e.lengthComputable) progressBar.style.width = ((e.loaded / e.total) * 100) + '%'; };
+                        xhr.onload = () => { if (xhr.status === 200) { mediaUrl = JSON.parse(xhr.responseText).secure_url; resolve(); } else reject(new Error("Cloudinary Error")); };
                         xhr.onerror = () => reject(new Error("Internet Connection Error"));
                         xhr.send(fd);
                     });
-
                     setTimeout(() => { progressContainer.classList.add('hidden'); progressBar.style.width = '0%'; }, 1000);
                 }
 
                 await addDoc(collection(db, "posts"), {
                     authorId: currentUserProfile.uid,
                     authorName: currentUserProfile.name,
-                    content: content,
-                    mediaUrl: mediaUrl,
-                    mediaType: postMeta.fileType,
-                    feeling: postMeta.feeling,
-                    location: postMeta.location,
-                    tags: postMeta.tags,
-                    createdAt: serverTimestamp(),
-                    editHistory: [], isArchived: false, isPinned: false
+                    content: content, mediaUrl: mediaUrl, mediaType: postMeta.fileType,
+                    feeling: postMeta.feeling, location: postMeta.location, tags: postMeta.tags,
+                    privacy: privacy, // Save privacy option
+                    reactions: { likes: 0, haha: 0, sad: 0 }, // Reaction setup
+                    createdAt: serverTimestamp(), editHistory: [], isArchived: false, isPinned: false
                 });
 
+                // Reset UI
                 document.getElementById('postContent').value = ""; document.getElementById('removeMediaBtn').click();
                 postMeta = { feeling: null, location: null, tags: null, file: null, fileType: null };
                 updateMetaPreview();
+                
+                // Reload feed automatically after post
+                window.loadFeed();
 
             } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Upload Error',
-                    text: error.message
-                });
+                Swal.fire({ icon: 'error', title: 'Upload Error', text: error.message });
                 document.getElementById('uploadProgressContainer').classList.add('hidden');
             } finally {
-                btn.disabled = false; btnText.innerText = "Post"; spinner.classList.add('hidden');
+                // Restore UI
+                document.getElementById('postInputSection').classList.remove('hidden');
+                document.getElementById('uploadingState').classList.add('hidden');
             }
         });
 
-        // Load Feed
-        function loadFeed() {
-            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-            onSnapshot(q, (snapshot) => {
-                const feedContainer = document.getElementById('feedContainer');
-                feedContainer.innerHTML = '';
+        // Load Feed (Manual Refresh / No Real-time)
+        window.loadFeed = async function() {
+            const feedContainer = document.getElementById('feedContainer');
+            feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-3xl"></i><p class="mt-3 font-medium">Loading Feed...</p></div>`;
+
+            try {
+                // Use getDocs instead of onSnapshot for manual refresh
+                const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+                const snapshot = await getDocs(q);
                 
+                feedContainer.innerHTML = '';
                 let posts = [];
                 snapshot.forEach((doc) => {
                     let p = doc.data(); p.id = doc.id;
-                    if (!p.isArchived) posts.push(p);
+                    
+                    // Basic Privacy Filter (Will enhance when friends system is ready)
+                    if (p.isArchived) return;
+                    if (p.privacy === 'onlyMe' && p.authorId !== currentUserProfile.uid) return;
+                    
+                    posts.push(p);
                 });
 
                 posts.sort((a, b) => b.isPinned - a.isPinned);
@@ -346,6 +338,11 @@
                     if (post.tags) metaText += ` with <b>${post.tags}</b>`;
                     if (post.location) metaText += ` at <b>${post.location}</b>`;
 
+                    // Privacy Icon
+                    let privacyIcon = '<i class="fa-solid fa-earth-americas ml-1 text-[10px]" title="Public"></i>';
+                    if (post.privacy === 'friends') privacyIcon = '<i class="fa-solid fa-user-group ml-1 text-[10px]" title="Friends"></i>';
+                    if (post.privacy === 'onlyMe') privacyIcon = '<i class="fa-solid fa-lock ml-1 text-[10px]" title="Only Me"></i>';
+
                     let mediaHtml = '';
                     if (post.mediaUrl) {
                         if (post.mediaType === 'video') mediaHtml = `<video src="${post.mediaUrl}" controls class="w-full h-auto max-h-96 object-cover mt-3 bg-black"></video>`;
@@ -359,10 +356,10 @@
                         <div class="p-4">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center font-bold text-blue-800 shadow-inner">${post.authorName.charAt(0)}</div>
+                                    <a href="profile.html?uid=${post.authorId}" class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center font-bold text-blue-800 shadow-inner hover:scale-105 transition">${post.authorName.charAt(0)}</a>
                                     <div>
-                                        <h3 class="font-bold text-gray-800 text-sm">${post.authorName} <span class="font-normal text-gray-500">${metaText}</span>${post.isPinned ? '<span class="ml-1 text-[10px] text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full uppercase tracking-wider"><i class="fa-solid fa-thumbtack"></i> Pinned</span>' : ''}</h3>
-                                        <p class="text-xs text-gray-500 mt-0.5">${timeString} <i class="fa-solid fa-earth-americas ml-1 text-[10px]"></i></p>
+                                        <h3 class="font-bold text-gray-800 text-sm"><a href="profile.html?uid=${post.authorId}" class="hover:underline">${post.authorName}</a> <span class="font-normal text-gray-500">${metaText}</span>${post.isPinned ? '<span class="ml-1 text-[10px] text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full uppercase tracking-wider"><i class="fa-solid fa-thumbtack"></i> Pinned</span>' : ''}</h3>
+                                        <p class="text-xs text-gray-500 mt-0.5">${timeString} ${privacyIcon}</p>
                                     </div>
                                 </div>
                                 ${(isOwner || isAdmin) ? `
@@ -377,20 +374,44 @@
                             ${post.content ? `<div class="text-gray-800 text-sm whitespace-pre-wrap mt-2">${escapeHtml(post.content)}</div>` : ''}
                         </div>
                         ${mediaHtml}
+                        
                         <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/50 flex gap-6 text-gray-500 font-bold text-sm">
-                            <button class="hover:text-blue-600 transition flex items-center gap-1.5"><i class="fa-regular fa-thumbs-up text-lg"></i> Like</button>
+                            <div class="reaction-btn-group relative">
+                                <button class="hover:text-blue-600 transition flex items-center gap-1.5"><i class="fa-regular fa-thumbs-up text-lg"></i> React</button>
+                                <div class="reaction-box absolute bottom-full left-0 mb-2 bg-white shadow-xl rounded-full px-4 py-2 gap-4 border border-gray-100 z-10">
+                                    <button onclick="window.reactPost('${post.id}', 'likes')" class="text-2xl hover:-translate-y-1 hover:scale-125 transition-transform" title="Like">👍</button>
+                                    <button onclick="window.reactPost('${post.id}', 'haha')" class="text-2xl hover:-translate-y-1 hover:scale-125 transition-transform" title="Haha">😂</button>
+                                    <button onclick="window.reactPost('${post.id}', 'sad')" class="text-2xl hover:-translate-y-1 hover:scale-125 transition-transform" title="Sad">😢</button>
+                                </div>
+                            </div>
                             <button class="hover:text-blue-600 transition flex items-center gap-1.5"><i class="fa-regular fa-comment text-lg"></i> Comment</button>
                         </div>
                     `;
                     feedContainer.appendChild(postEl);
                 });
-            });
+            } catch (error) {
+                console.error("Error loading feed:", error);
+                feedContainer.innerHTML = `<div class="text-center text-red-500 py-10 font-medium">Error loading feed.</div>`;
+            }
         }
 
+        // Global functions
         function escapeHtml(text) { const div = document.createElement('div'); div.innerText = text; return div.innerHTML; }
-        window.archivePost = async function(postId) { if(confirm("Archive this post?")) await updateDoc(doc(db, "posts", postId), { isArchived: true }); };
-        window.deletePost = async function(postId) { if(confirm("Permanently delete?")) await deleteDoc(doc(db, "posts", postId)); };
-        window.togglePin = async function(postId, currentStatus) { await updateDoc(doc(db, "posts", postId), { isPinned: !currentStatus }); };
+        window.archivePost = async function(postId) { if(confirm("Archive this post?")) { await updateDoc(doc(db, "posts", postId), { isArchived: true }); window.loadFeed(); } };
+        window.deletePost = async function(postId) { if(confirm("Permanently delete?")) { await deleteDoc(doc(db, "posts", postId)); window.loadFeed(); } };
+        window.togglePin = async function(postId, currentStatus) { await updateDoc(doc(db, "posts", postId), { isPinned: !currentStatus }); window.loadFeed(); };
+        
+        // Placeholder for Reaction Logic (To be fully implemented with Database)
+        window.reactPost = function(postId, type) {
+            Swal.fire({
+                title: 'Reaction Saved!',
+                text: `You reacted with ${type} (Database logic coming soon)`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        };
+
         document.getElementById('logoutBtn').addEventListener('click', () => { signOut(auth).then(() => { window.location.href = "login.html"; }); });
     </script>
 </body>
