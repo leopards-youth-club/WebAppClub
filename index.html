@@ -183,7 +183,7 @@
             document.getElementById('videoPreview').pause();
         });
 
-        // Create Post (With Cloudinary)
+        // Create Post (With Cloudinary - Error Debugging Version)
         document.getElementById('createPostBtn').addEventListener('click', async () => {
             const content = document.getElementById('postContent').value.trim();
             if (!content && !postMeta.file) { Swal.fire('Empty Post', 'Please write something or attach media.', 'info'); return; }
@@ -191,22 +191,14 @@
             const btn = document.getElementById('createPostBtn');
             const btnText = document.getElementById('btnText');
             const spinner = document.getElementById('postSpinner');
-            
-            // 1. බටන් එක එබූ සැනින් Loading සහ Progress Bar එක පෙන්වීම
-            btn.disabled = true; 
-            btnText.innerText = "Uploading..."; 
-            spinner.classList.remove('hidden');
+            btn.disabled = true; btnText.innerText = "Uploading..."; spinner.classList.remove('hidden');
 
             try {
                 let mediaUrl = null;
 
-// Cloudinary Upload
                 if (postMeta.file) {
-                    // 🛑 මෙතැනට ඔයාගේ විස්තර දාන්න 🛑
-                    const CLOUD_NAME = "dxauvoq7v"; // උදා: dxy123abc
+                    const CLOUD_NAME = "dxauvoq7v"; 
                     const UPLOAD_PRESET = "ml_default"; 
-
-                    // 👇 මෙන්න මේ ලින්ක් එකේ "auto" කියන කෑල්ල අලුතින් එකතු කරලා තියෙන්නේ 👇
                     const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 
                     const fd = new FormData();
@@ -222,10 +214,7 @@
                         xhr.open('POST', url, true);
                         
                         xhr.upload.onprogress = (e) => {
-                            if (e.lengthComputable) {
-                                let percent = (e.loaded / e.total) * 100;
-                                progressBar.style.width = percent + '%';
-                            }
+                            if (e.lengthComputable) progressBar.style.width = ((e.loaded / e.total) * 100) + '%';
                         };
                         
                         xhr.onload = () => {
@@ -233,18 +222,21 @@
                                 mediaUrl = JSON.parse(xhr.responseText).secure_url;
                                 resolve();
                             } else {
-                                console.error("Cloudinary Error:", xhr.responseText);
-                                reject(new Error("Cloudinary ප්‍රතික්ෂේප කළා."));
+                                // මෙන්න මේ ටික වෙනස් කළා ඇත්තම එරර් එක අල්ලගන්න 👇
+                                let exactError = "Unknown Error";
+                                try {
+                                    exactError = JSON.parse(xhr.responseText).error.message;
+                                } catch(e) {}
+                                reject(new Error(exactError)); // ඇත්තම හේතුව Popup එකට යවනවා
                             }
                         };
-                        xhr.onerror = () => reject(new Error("Internet Connection Error"));
+                        xhr.onerror = () => reject(new Error("Internet Connection Error or Adblocker blocking upload."));
                         xhr.send(fd);
                     });
 
                     setTimeout(() => { progressContainer.classList.add('hidden'); progressBar.style.width = '0%'; }, 1000);
                 }
 
-                // 2. Firebase Database එකට දත්ත සේව් කිරීම
                 await addDoc(collection(db, "posts"), {
                     authorId: currentUserProfile.uid,
                     authorName: currentUserProfile.name,
@@ -258,20 +250,16 @@
                     editHistory: [], isArchived: false, isPinned: false
                 });
 
-                // 3. සාර්ථක වුණාට පසු Input කොටුව ඔටෝම මැකී යාම
-                document.getElementById('postContent').value = ""; 
-                document.getElementById('removeMediaBtn').click();
+                document.getElementById('postContent').value = ""; document.getElementById('removeMediaBtn').click();
                 postMeta = { feeling: null, location: null, tags: null, file: null, fileType: null };
                 updateMetaPreview();
 
             } catch (error) {
-                Swal.fire('Upload Error', error.message, 'error');
+                // එරර් එක Popup එකේ පෙන්නනවා
+                Swal.fire('Upload Error', 'Reason: ' + error.message, 'error');
                 document.getElementById('uploadProgressContainer').classList.add('hidden');
             } finally {
-                // 4. බටන් එක නැවත යථා තත්වයට පත් කිරීම
-                btn.disabled = false; 
-                btnText.innerText = "Post"; 
-                spinner.classList.add('hidden');
+                btn.disabled = false; btnText.innerText = "Post"; spinner.classList.add('hidden');
             }
         });
 
