@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Members | Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { padding-top: 130px; background-color: #f3f4f6; font-family: 'Inter', sans-serif; }
+        #bottomNav { transition: transform 0.3s ease-in-out; }
+        .hide-nav { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+        .dropdown-content { display: none; }
+        .show-dropdown { display: block; }
+        
+        .member-card { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <header class="fixed w-full top-0 z-50 shadow-sm flex flex-col">
+        <div class="flex justify-between items-center px-4 py-3 bg-white z-50 border-b border-gray-100">
+            <img src="logo.png" alt="Logo" class="h-10 object-contain cursor-pointer" onclick="window.location.href='index.html'">
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <div id="profileBtn" class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold cursor-pointer shadow-md hover:scale-105 transition-transform"><i class="fa-solid fa-user"></i></div>
+                    <div id="profileMenu" class="dropdown-content absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 origin-top-right transition-all">
+                        <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-blue-600"><i class="fa-solid fa-circle-user mr-2"></i> My Profile</a>
+                        <hr class="my-1 border-gray-100">
+                        <button id="logoutBtn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"><i class="fa-solid fa-right-from-bracket mr-2"></i> Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <nav id="bottomNav" class="flex justify-around items-center bg-white px-2 py-1 shadow-md absolute w-full top-full -z-10">
+            <a href="index.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Feed"><i class="fa-solid fa-house"></i></a>
+            <a href="requests.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Requests"><i class="fa-solid fa-user-plus"></i></a>
+            <a href="members.html" class="flex-1 flex justify-center py-3 text-blue-600 text-2xl border-b-2 border-blue-600" title="Members"><i class="fa-solid fa-users"></i></a>
+            <a href="notifications.html" class="flex-1 flex justify-center py-3 text-gray-400 hover:text-blue-600 transition-colors text-2xl" title="Notifications"><i class="fa-solid fa-bell"></i></a>
+            <a href="admindashboard.html" id="adminTab" class="hidden flex-1 flex justify-center py-3 text-red-400 hover:text-red-600 transition-colors text-2xl" title="Admin Panel"><i class="fa-solid fa-shield-halved"></i></a>
+        </nav>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 pb-10 mt-6">
+        
+        <div class="mb-6 relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+            </div>
+            <input type="text" id="searchInput" placeholder="Search friends by name or city..." class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-full shadow-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-700 font-medium">
+        </div>
+
+        <div id="membersContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="col-span-full text-center text-gray-500 py-10">
+                <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+                <p class="mt-3 font-medium">Finding members...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 🛑 ඔබේ Firebase Config එක මෙතනට දාන්න 🛑
+        const firebaseConfig = {
+            apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
+            authDomain: "mysocialapp-27824.firebaseapp.com",
+            projectId: "mysocialapp-27824",
+            storageBucket: "mysocialapp-27824.firebasestorage.app",
+            messagingSenderId: "774980218922",
+            appId: "1:774980218922:web:24b832c42b16d42a025353"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUserProfile = null;
+        let allMembers = []; // මෙහි සියලුම යූසර්ස්ලා සේව් කරගනී
+        let sentRequests = []; // යවා ඇති රික්වෙස්ට් ලිස්ට් එක
+
+        // Navbar Scroll
+        let lastScrollY = window.scrollY;
+        window.addEventListener("scroll", () => {
+            const bottomNav = document.getElementById("bottomNav");
+            if (window.scrollY > lastScrollY && window.scrollY > 50) bottomNav.classList.add("hide-nav");
+            else bottomNav.classList.remove("hide-nav");
+            lastScrollY = window.scrollY;
+        });
+
+        document.getElementById('profileBtn').addEventListener('click', () => document.getElementById('profileMenu').classList.toggle('show-dropdown'));
+
+        // Auth
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = "login.html"; return; }
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                currentUserProfile = userDoc.data();
+                if (!currentUserProfile.friends) currentUserProfile.friends = []; // Array එක නැත්නම් හදනවා
+                
+                if (user.email === "sandusha@gmail.com") { 
+                    document.getElementById('adminTab').classList.remove('hidden');
+                    document.getElementById('adminTab').classList.add('flex');
+                }
+                await fetchSentRequests();
+                loadMembers();
+            }
+        });
+
+        // අපි යවලා තියෙන රික්වෙස්ට් හොයාගැනීම (Requested කියලා පෙන්වන්න)
+        async function fetchSentRequests() {
+            const q = query(collection(db, "friendRequests"), where("senderId", "==", currentUserProfile.uid), where("status", "==", "pending"));
+            const snapshot = await getDocs(q);
+            snapshot.forEach(doc => {
+                sentRequests.push(doc.data().receiverId);
+            });
+        }
+
+        // Active Members ලෝඩ් කිරීම
+        async function loadMembers() {
+            const container = document.getElementById('membersContainer');
+            
+            try {
+                const q = query(collection(db, "users"), where("status", "==", "active"));
+                const snapshot = await getDocs(q);
+                
+                allMembers = [];
+                snapshot.forEach((docSnap) => {
+                    const user = docSnap.data();
+                    // අපිවම පෙන්නන්න ඕනෙ නැති නිසා අපේ profile එක අයින් කරනවා
+                    if (user.uid !== currentUserProfile.uid) {
+                        allMembers.push(user);
+                    }
+                });
+
+                renderMembers(allMembers);
+
+            } catch (error) {
+                console.error("Error loading members:", error);
+                container.innerHTML = `<div class="col-span-full text-center text-red-500 py-10 font-medium">Error loading members.</div>`;
+            }
+        }
+
+        // යූසර්ස්ලව තිරයේ පෙන්වීමේ ෆන්ක්ෂන් එක
+        function renderMembers(membersToRender) {
+            const container = document.getElementById('membersContainer');
+            container.innerHTML = '';
+
+            if (membersToRender.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10">No members found.</div>`;
+                return;
+            }
+
+            membersToRender.forEach((user) => {
+                const isFriend = currentUserProfile.friends && currentUserProfile.friends.includes(user.uid);
+                const hasRequested = sentRequests.includes(user.uid);
+
+                let buttonHtml = '';
+                if (isFriend) {
+                    buttonHtml = `<button class="w-full mt-3 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2 pointer-events-none"><i class="fa-solid fa-user-check"></i> Friends</button>`;
+                } else if (hasRequested) {
+                    buttonHtml = `<button class="w-full mt-3 bg-gray-200 text-gray-600 px-4 py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2 pointer-events-none"><i class="fa-solid fa-clock"></i> Requested</button>`;
+                } else {
+                    buttonHtml = `<button id="addBtn-${user.uid}" onclick="window.sendRequest('${user.uid}', '${user.name}')" class="w-full mt-3 bg-blue-100 text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-600 hover:text-white transition-colors flex items-center justify-center gap-2"><i class="fa-solid fa-user-plus"></i> Add Friend</button>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = "member-card bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col";
+                card.innerHTML = `
+                    <div class="flex items-center gap-4 cursor-pointer" onclick="window.location.href='profile.html?uid=${user.uid}'">
+                        <div class="w-14 h-14 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-bold text-gray-600 text-xl shadow-inner border border-gray-200">
+                            ${user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-800 hover:text-blue-600 transition-colors">${user.name}</h3>
+                            <p class="text-xs text-gray-500 flex items-center gap-1 mt-0.5"><i class="fa-solid fa-location-dot"></i> ${user.city || 'Unknown'}</p>
+                        </div>
+                    </div>
+                    ${buttonHtml}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Real-time Search Logic
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredMembers = allMembers.filter(user => 
+                user.name.toLowerCase().includes(searchTerm) || 
+                (user.city && user.city.toLowerCase().includes(searchTerm))
+            );
+            renderMembers(filteredMembers);
+        });
+
+        // Add Friend Logic
+        window.sendRequest = async function(targetId, targetName) {
+            const btn = document.getElementById(`addBtn-${targetId}`);
+            
+            // UI එක එවේලේම මාරු කරනවා
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sending...`;
+            btn.disabled = true;
+
+            try {
+                // Database එකට රික්වෙස්ට් එක දානවා
+                await addDoc(collection(db, "friendRequests"), {
+                    senderId: currentUserProfile.uid,
+                    senderName: currentUserProfile.name,
+                    receiverId: targetId,
+                    status: "pending",
+                    createdAt: serverTimestamp()
+                });
+
+                // සෙට් එකට මේක එකතු කරගන්නවා
+                sentRequests.push(targetId);
+
+                // UI එක සාර්ථකයි කියලා පෙන්නනවා
+                btn.innerHTML = `<i class="fa-solid fa-clock"></i> Requested`;
+                btn.className = "w-full mt-3 bg-gray-200 text-gray-600 px-4 py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2 pointer-events-none";
+
+            } catch (error) {
+                Swal.fire('Error', 'Failed to send request.', 'error');
+                btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Add Friend`;
+                btn.disabled = false;
+            }
+        };
+
+        document.getElementById('logoutBtn').addEventListener('click', () => { signOut(auth).then(() => { window.location.href = "login.html"; }); });
+    </script>
+</body>
+</html>
