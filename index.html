@@ -200,13 +200,14 @@
             try {
                 let mediaUrl = null;
 
-                // Cloudinary Upload
+// Cloudinary Upload
                 if (postMeta.file) {
-                    // 🛑 මෙතැනට ඔයාගේ විස්තර හරියටම දාන්න 🛑
-                    const CLOUD_NAME = "YOUR_CLOUD_NAME"; // උදා: dxy123abc
-                    const UPLOAD_PRESET = "YOUR_UPLOAD_PRESET"; // උදා: ml_default
+                    // 🛑 මෙතැනට ඔයාගේ විස්තර දාන්න 🛑
+                    const CLOUD_NAME = "dxauvoq7v"; // උදා: dxy123abc
+                    const UPLOAD_PRESET = "ml_default"; 
 
-                    const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
+                    // 👇 මෙන්න මේ ලින්ක් එකේ "auto" කියන කෑල්ල අලුතින් එකතු කරලා තියෙන්නේ 👇
+                    const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 
                     const fd = new FormData();
                     fd.append("file", postMeta.file);
@@ -232,9 +233,8 @@
                                 mediaUrl = JSON.parse(xhr.responseText).secure_url;
                                 resolve();
                             } else {
-                                // Error එක පැහැදිලිව Console එකේ පෙන්වීම
                                 console.error("Cloudinary Error:", xhr.responseText);
-                                reject(new Error("Cloudinary ප්‍රතික්ෂේප කළා. (Preset එක Unsigned ද බලන්න)"));
+                                reject(new Error("Cloudinary ප්‍රතික්ෂේප කළා."));
                             }
                         };
                         xhr.onerror = () => reject(new Error("Internet Connection Error"));
