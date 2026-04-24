@@ -191,15 +191,21 @@
             const btn = document.getElementById('createPostBtn');
             const btnText = document.getElementById('btnText');
             const spinner = document.getElementById('postSpinner');
-            btn.disabled = true; btnText.innerText = "Uploading..."; spinner.classList.remove('hidden');
+            
+            // 1. බටන් එක එබූ සැනින් Loading සහ Progress Bar එක පෙන්වීම
+            btn.disabled = true; 
+            btnText.innerText = "Uploading..."; 
+            spinner.classList.remove('hidden');
 
             try {
                 let mediaUrl = null;
 
-                // Cloudinary Upload Details (මෙතැනට ඔබේ විස්තර දාන්න)
+                // Cloudinary Upload
                 if (postMeta.file) {
-                    const CLOUD_NAME = "dxauvoq7v"; 
-                    const UPLOAD_PRESET = "ml_default"; 
+                    // 🛑 මෙතැනට ඔයාගේ විස්තර හරියටම දාන්න 🛑
+                    const CLOUD_NAME = "YOUR_CLOUD_NAME"; // උදා: dxy123abc
+                    const UPLOAD_PRESET = "YOUR_UPLOAD_PRESET"; // උදා: ml_default
+
                     const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
 
                     const fd = new FormData();
@@ -215,22 +221,30 @@
                         xhr.open('POST', url, true);
                         
                         xhr.upload.onprogress = (e) => {
-                            if (e.lengthComputable) progressBar.style.width = ((e.loaded / e.total) * 100) + '%';
+                            if (e.lengthComputable) {
+                                let percent = (e.loaded / e.total) * 100;
+                                progressBar.style.width = percent + '%';
+                            }
                         };
                         
                         xhr.onload = () => {
                             if (xhr.status === 200) {
                                 mediaUrl = JSON.parse(xhr.responseText).secure_url;
                                 resolve();
-                            } else reject(new Error("Cloudinary upload failed"));
+                            } else {
+                                // Error එක පැහැදිලිව Console එකේ පෙන්වීම
+                                console.error("Cloudinary Error:", xhr.responseText);
+                                reject(new Error("Cloudinary ප්‍රතික්ෂේප කළා. (Preset එක Unsigned ද බලන්න)"));
+                            }
                         };
-                        xhr.onerror = () => reject(new Error("Network Error"));
+                        xhr.onerror = () => reject(new Error("Internet Connection Error"));
                         xhr.send(fd);
                     });
 
                     setTimeout(() => { progressContainer.classList.add('hidden'); progressBar.style.width = '0%'; }, 1000);
                 }
 
+                // 2. Firebase Database එකට දත්ත සේව් කිරීම
                 await addDoc(collection(db, "posts"), {
                     authorId: currentUserProfile.uid,
                     authorName: currentUserProfile.name,
@@ -244,15 +258,20 @@
                     editHistory: [], isArchived: false, isPinned: false
                 });
 
-                document.getElementById('postContent').value = ""; document.getElementById('removeMediaBtn').click();
+                // 3. සාර්ථක වුණාට පසු Input කොටුව ඔටෝම මැකී යාම
+                document.getElementById('postContent').value = ""; 
+                document.getElementById('removeMediaBtn').click();
                 postMeta = { feeling: null, location: null, tags: null, file: null, fileType: null };
                 updateMetaPreview();
 
             } catch (error) {
-                Swal.fire('Error', 'Failed to post: ' + error.message, 'error');
+                Swal.fire('Upload Error', error.message, 'error');
                 document.getElementById('uploadProgressContainer').classList.add('hidden');
             } finally {
-                btn.disabled = false; btnText.innerText = "Post"; spinner.classList.add('hidden');
+                // 4. බටන් එක නැවත යථා තත්වයට පත් කිරීම
+                btn.disabled = false; 
+                btnText.innerText = "Post"; 
+                spinner.classList.add('hidden');
             }
         });
 
