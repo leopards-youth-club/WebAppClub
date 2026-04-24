@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Feed | Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { padding-top: 130px; background-color: #f3f4f6; }
+        /* Smart Navbar Transition */
+        #navbar { transition: transform 0.3s ease-in-out; }
+        .hide-nav { transform: translateY(-100%); }
+        /* Hide Scrollbar for Nav */
+        .nav-scroller::-webkit-scrollbar { display: none; }
+        .dropdown-content { display: none; }
+        .show-dropdown { display: block; }
+    </style>
+</head>
+<body>
+
+    <header id="navbar" class="fixed w-full top-0 z-50 shadow-md bg-white">
+        <div class="flex justify-between items-center px-4 py-3 border-b border-gray-100">
+            <img src="mainlogo.png" alt="Logo" class="h-10 object-contain">
+            <div class="relative">
+                <div id="profileBtn" class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold cursor-pointer border border-blue-200">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div id="profileMenu" class="dropdown-content absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2">
+                    <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-50"><i class="fa-solid fa-circle-user mr-2"></i> My Profile</a>
+                    <hr class="my-1">
+                    <button id="logoutBtn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"><i class="fa-solid fa-right-from-bracket mr-2"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+        <nav class="nav-scroller flex overflow-x-auto bg-white px-2 py-1">
+            <a href="index.html" class="flex-shrink-0 px-4 py-2 text-blue-600 font-bold border-b-2 border-blue-600"><i class="fa-solid fa-house mr-1"></i> Feed</a>
+            <a href="requests.html" class="flex-shrink-0 px-4 py-2 text-gray-500 font-medium hover:text-blue-600 transition"><i class="fa-solid fa-user-plus mr-1"></i> Requests</a>
+            <a href="members.html" class="flex-shrink-0 px-4 py-2 text-gray-500 font-medium hover:text-blue-600 transition"><i class="fa-solid fa-users mr-1"></i> Members</a>
+            <a href="notifications.html" class="flex-shrink-0 px-4 py-2 text-gray-500 font-medium hover:text-blue-600 transition"><i class="fa-solid fa-bell mr-1"></i> Notifications</a>
+            <a href="admindashboard.html" id="adminTab" class="hidden flex-shrink-0 px-4 py-2 text-red-500 font-bold hover:text-red-700 transition"><i class="fa-solid fa-shield-halved mr-1"></i> Admin</a>
+        </nav>
+    </header>
+
+    <main class="max-w-2xl mx-auto px-4 pb-10">
+        
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-200">
+            <div class="flex gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <textarea id="postContent" class="w-full bg-gray-100 rounded-lg p-3 outline-none resize-none" rows="3" placeholder="What's on your mind?"></textarea>
+            </div>
+            <div class="flex justify-end mt-3">
+                <button id="createPostBtn" class="bg-blue-600 text-white px-6 py-1.5 rounded-full font-semibold hover:bg-blue-700 transition">Post</button>
+            </div>
+        </div>
+
+        <div id="feedContainer" class="space-y-6">
+            <div class="text-center text-gray-500 py-10"><i class="fa-solid fa-spinner fa-spin text-2xl"></i><p class="mt-2">Loading Feed...</p></div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDldf2DAiB9jNnnsVHuwbHYUXbY5kQfj1s",
+            authDomain: "mysocialapp-27824.firebaseapp.com",
+            projectId: "mysocialapp-27824",
+            storageBucket: "mysocialapp-27824.firebasestorage.app",
+            messagingSenderId: "774980218922",
+            appId: "1:774980218922:web:24b832c42b16d42a025353"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUserProfile = null;
+        let isAdmin = false;
+
+        // --- 1. Smart Navbar Scroll Logic ---
+        let lastScrollY = window.scrollY;
+        window.addEventListener("scroll", () => {
+            const navbar = document.getElementById("navbar");
+            if (window.scrollY > lastScrollY && window.scrollY > 50) {
+                navbar.classList.add("hide-nav"); // Scroll Down -> Hide
+            } else {
+                navbar.classList.remove("hide-nav"); // Scroll Up -> Show
+            }
+            lastScrollY = window.scrollY;
+        });
+
+        // Profile Menu Toggle
+        document.getElementById('profileBtn').addEventListener('click', () => {
+            document.getElementById('profileMenu').classList.toggle('show-dropdown');
+        });
+
+        // --- 2. Auth & Admin Check ---
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = "login.html"; return; }
+            
+            // Get User details from Firestore
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                currentUserProfile = userDoc.data();
+                // Check if admin (using email check like before, or if you saved role='admin')
+                // For UI rendering, simple email check is fast enough
+                if (user.email === "sandusha@gmail.com") { 
+                    isAdmin = true;
+                    document.getElementById('adminTab').classList.remove('hidden');
+                }
+                loadFeed(); // Start loading posts
+            }
+        });
+
+        // --- 3. Create Post ---
+        document.getElementById('createPostBtn').addEventListener('click', async () => {
+            const content = document.getElementById('postContent').value.trim();
+            if (!content) return;
+
+            try {
+                document.getElementById('createPostBtn').innerText = "Posting...";
+                await addDoc(collection(db, "posts"), {
+                    authorId: currentUserProfile.uid,
+                    authorName: currentUserProfile.name,
+                    content: content,
+                    createdAt: serverTimestamp(),
+                    editHistory: [], // To store previous versions
+                    isArchived: false,
+                    isPinned: false
+                });
+                document.getElementById('postContent').value = "";
+                document.getElementById('createPostBtn').innerText = "Post";
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            }
+        });
+
+        // --- 4. Load Feed (Real-time) ---
+        function loadFeed() {
+            // We fetch all posts, then sort in JS so Pinned posts stay at top
+            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+            
+            onSnapshot(q, (snapshot) => {
+                const feedContainer = document.getElementById('feedContainer');
+                feedContainer.innerHTML = '';
+                
+                let posts = [];
+                snapshot.forEach((doc) => {
+                    let postData = doc.data();
+                    postData.id = doc.id;
+                    if (!postData.isArchived) { // Don't show archived posts
+                        posts.push(postData);
+                    }
+                });
+
+                // Sort: Pinned posts first, then by date
+                posts.sort((a, b) => b.isPinned - a.isPinned);
+
+                if (posts.length === 0) {
+                    feedContainer.innerHTML = `<div class="text-center text-gray-500 py-10">No posts yet.</div>`;
+                    return;
+                }
+
+                posts.forEach(post => {
+                    const isOwner = post.authorId === currentUserProfile.uid;
+                    const dateObj = post.createdAt ? post.createdAt.toDate() : new Date();
+                    const timeString = dateObj.toLocaleString();
+                    const isEdited = post.editHistory && post.editHistory.length > 0;
+
+                    // Post HTML
+                    const postEl = document.createElement('div');
+                    postEl.className = `bg-white rounded-xl shadow-sm p-5 border ${post.isPinned ? 'border-blue-300 bg-blue-50/10' : 'border-gray-200'}`;
+                    
+                    postEl.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">
+                                    ${post.authorName.charAt(0)}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
+                                        ${post.authorName} 
+                                        ${post.isPinned ? '<span class="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full"><i class="fa-solid fa-thumbtack"></i> Pinned</span>' : ''}
+                                    </h3>
+                                    <p class="text-xs text-gray-500">${timeString} 
+                                        ${isEdited ? `<span class="text-blue-500 cursor-pointer hover:underline ml-1" onclick="window.viewEditHistory('${post.id}')">(Edited)</span>` : ''}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            ${(isOwner || isAdmin) ? `
+                            <div class="relative">
+                                <button onclick="document.getElementById('menu-${post.id}').classList.toggle('hidden')" class="text-gray-400 hover:text-gray-600 p-2"><i class="fa-solid fa-ellipsis"></i></button>
+                                <div id="menu-${post.id}" class="hidden absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-10">
+                                    ${isAdmin ? `<button onclick="window.togglePin('${post.id}', ${post.isPinned})" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i class="fa-solid fa-thumbtack mr-2"></i> ${post.isPinned ? 'Unpin' : 'Pin Post'}</button>` : ''}
+                                    ${isOwner ? `<button onclick="window.editPost('${post.id}', '${escapeHtml(post.content)}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i class="fa-solid fa-pen mr-2"></i> Edit</button>
+                                                 <button onclick="window.archivePost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i class="fa-solid fa-box-archive mr-2"></i> Archive</button>
+                                                 <hr class="my-1">
+                                                 <button onclick="window.deletePost('${post.id}')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fa-solid fa-trash mr-2"></i> Delete</button>` : ''}
+                                </div>
+                            </div>` : ''}
+                        </div>
+
+                        <div class="text-gray-800 text-sm whitespace-pre-wrap mb-4">${escapeHtml(post.content)}</div>
+
+                        <div class="flex items-center gap-6 border-t border-gray-100 pt-3 text-gray-500 font-medium text-sm">
+                            <button class="hover:text-blue-600 transition"><i class="fa-regular fa-thumbs-up mr-1"></i> Like</button>
+                            <button class="hover:text-blue-600 transition"><i class="fa-regular fa-comment mr-1"></i> Comment</button>
+                        </div>
+                    `;
+                    feedContainer.appendChild(postEl);
+                });
+            });
+        }
+
+        // --- 5. Post Actions (Global Functions) ---
+        
+        // Escape HTML to prevent XSS attacks
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
+
+        window.editPost = async function(postId, currentContent) {
+            const { value: newContent } = await Swal.fire({
+                title: 'Edit Post',
+                input: 'textarea',
+                inputValue: currentContent,
+                showCancelButton: true,
+                confirmButtonText: 'Save Changes',
+                confirmButtonColor: '#2563eb'
+            });
+
+            if (newContent && newContent.trim() !== currentContent) {
+                const postRef = doc(db, "posts", postId);
+                const postSnap = await getDoc(postRef);
+                const postData = postSnap.data();
+                
+                // Add current content to history
+                let history = postData.editHistory || [];
+                history.push({ text: postData.content, date: new Date().toISOString() });
+
+                await updateDoc(postRef, {
+                    content: newContent.trim(),
+                    editHistory: history
+                });
+            }
+        };
+
+        window.viewEditHistory = async function(postId) {
+            const postRef = doc(db, "posts", postId);
+            const postSnap = await getDoc(postRef);
+            const history = postSnap.data().editHistory;
+            
+            let htmlContent = '<div class="text-left text-sm text-gray-600 space-y-3 max-h-60 overflow-y-auto">';
+            // Show latest history first
+            [...history].reverse().forEach((h, index) => {
+                let d = new Date(h.date).toLocaleString();
+                htmlContent += `<div class="bg-gray-50 p-3 rounded border"><p class="text-xs text-gray-400 mb-1">Version ${history.length - index} • ${d}</p><p class="whitespace-pre-wrap text-gray-800">${escapeHtml(h.text)}</p></div>`;
+            });
+            htmlContent += '</div>';
+
+            Swal.fire({ title: 'Edit History', html: htmlContent, confirmButtonColor: '#2563eb' });
+        };
+
+        window.archivePost = async function(postId) {
+            if(confirm("Archive this post? It will be hidden from the feed.")) {
+                await updateDoc(doc(db, "posts", postId), { isArchived: true });
+            }
+        };
+
+        window.deletePost = async function(postId) {
+            if(confirm("Permanently delete this post?")) {
+                await deleteDoc(doc(db, "posts", postId));
+            }
+        };
+
+        window.togglePin = async function(postId, currentStatus) {
+            await updateDoc(doc(db, "posts", postId), { isPinned: !currentStatus });
+        };
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => { window.location.href = "login.html"; });
+        });
+    </script>
+</body>
+</html>
